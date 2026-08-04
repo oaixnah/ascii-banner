@@ -27,13 +27,14 @@ try {
 const related = fonts.filter((candidate) => candidate.slug !== font.slug && candidate.category === font.category).slice(0, 4);
 const title = `${font.name} ASCII Art Font Generator`;
 const description = `Preview the ${font.name} FIGlet font, generate a custom ASCII banner, and copy it as raw text, Markdown, or a source-code comment.`;
+const site = Astro.site ?? Astro.url.origin;
 const schema = {
   "@context": "https://schema.org",
   "@graph": [
     {
       "@type": "WebApplication",
       name: `${font.name} ASCII font generator`,
-      url: `https://asciibanner.dev/fonts/${font.slug}/`,
+      url: new URL(`/fonts/${font.slug}/`, site).href,
       applicationCategory: "DeveloperApplication",
       operatingSystem: "Any",
       description,
@@ -42,9 +43,9 @@ const schema = {
     {
       "@type": "BreadcrumbList",
       itemListElement: [
-        { "@type": "ListItem", position: 1, name: "ASCII Banner", item: "https://asciibanner.dev/" },
-        { "@type": "ListItem", position: 2, name: "Fonts", item: "https://asciibanner.dev/#popular-title" },
-        { "@type": "ListItem", position: 3, name: font.name, item: `https://asciibanner.dev/fonts/${font.slug}/` },
+        { "@type": "ListItem", position: 1, name: "ASCII Banner", item: new URL("/", site).href },
+        { "@type": "ListItem", position: 2, name: "Fonts", item: new URL("/#popular-title", site).href },
+        { "@type": "ListItem", position: 3, name: font.name, item: new URL(`/fonts/${font.slug}/`, site).href },
       ],
     },
   ],

@@ -33,7 +33,7 @@ const createRepository = async () => {
   await mkdir(dist);
   await Promise.all([
     writeFile(path.join(dist, "index.html"), "first build"),
-    writeFile(path.join(dist, "sitemap-index.xml"), "sitemap"),
+    writeFile(path.join(dist, "sitemap.xml"), "sitemap"),
   ]);
 
   return { remote, source, dist };
@@ -71,7 +71,7 @@ describe("publish-dist", () => {
     expect(await git(remote, "rev-list", "--count", "gh-pages")).toBe("1");
     expect((await git(remote, "ls-tree", "-r", "--name-only", "gh-pages")).split("\n")).toEqual([
       "index.html",
-      "sitemap-index.xml",
+      "sitemap.xml",
     ]);
     expect(await git(remote, "show", "gh-pages:index.html")).toBe("first build");
     await expect(readFile(path.join(source, "source.txt"), "utf8")).resolves.toBe("source only");
