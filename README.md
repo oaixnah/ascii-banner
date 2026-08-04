@@ -12,7 +12,7 @@ cp .env.example .env
 pnpm dev
 ```
 
-Set `CONTACT_EMAIL`, `GA_MEASUREMENT_ID`, and `CLARITY_PROJECT_ID` in `.env`. The build fails when any required value is missing or malformed. Analytics scripts are consent-gated and their identifiers are intentionally public in the generated HTML.
+Set `SITE_URL`, `CONTACT_EMAIL`, `GA_MEASUREMENT_ID`, and `CLARITY_PROJECT_ID` in `.env`. `SITE_URL` must be the public HTTPS origin without a path, such as `https://asciibanner.dev`. The build fails when any required value is missing or malformed. Analytics scripts are consent-gated and their identifiers are intentionally public in the generated HTML.
 
 The font sync runs before development and production builds. It copies distributable `.flf` assets from the pinned `figlet` package, builds the typed manifest, verifies printable English output, rejects embedded header notices that conflict with redistribution, and removes fonts that fail the v1 ASCII compatibility check.
 
@@ -40,15 +40,16 @@ The deploy verifier requires the canonical robots and sitemap files, checks ever
 
 Before the first workflow run, create these GitHub Actions repository secrets under **Settings → Secrets and variables → Actions**:
 
+- `SITE_URL` — the public HTTPS origin, for example `https://asciibanner.dev`
 - `CONTACT_EMAIL`
 - `GA_MEASUREMENT_ID` — the GA4 web stream measurement ID beginning with `G-`
 - `CLARITY_PROJECT_ID` — the Microsoft Clarity project ID
 
-Repository secrets protect values while the workflow runs, but all three identifiers are intentionally public in the generated site HTML or vendor requests.
+Repository secrets protect values while the workflow runs. The site URL, contact address, and analytics identifiers are intentionally public in generated HTML, SEO files, or vendor requests.
 
 ## Site configuration
 
-- Update the canonical production origin in `astro.config.mjs` and `public/robots.txt` if the domain changes.
+- `SITE_URL` is the single source for canonical links, structured data, `robots.txt`, and the single root-level `sitemap.xml`.
 - Advertising is disabled by default. Keep `PUBLIC_ADS_ENABLED=false` until preparing a properly consented ad integration.
 - Only the 20 editorially documented font pages enter the sitemap. Other generated font pages remain available with `noindex,follow`.
 - Configure the hosting platform to return `Strict-Transport-Security`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin`, a restrictive `Permissions-Policy`, and a tested Content Security Policy. The CSP must allow consented scripts and connections for Google Analytics and Microsoft Clarity. Start CSP in report-only mode because the current static output uses inline JSON-LD, consent code, and inline style values.

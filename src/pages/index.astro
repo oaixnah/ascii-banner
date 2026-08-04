@@ -6,6 +6,7 @@ import { fonts, indexedFonts } from "../lib/font-data";
 
 const title = "ASCII Banner Generator – Preview Every FIGlet Font";
 const description = `Type once and preview ${fonts.length} FIGlet fonts at the same time. Copy ASCII banners as raw text, Markdown, or code comments—free, private, and browser-based.`;
+const site = Astro.site ?? Astro.url.origin;
 const faqs = [
   {
     question: "What is a FIGlet font?",
@@ -30,7 +31,7 @@ const schema = {
     {
       "@type": "WebApplication",
       name: "ASCII Banner",
-      url: "https://asciibanner.dev/",
+      url: new URL("/", site).href,
       applicationCategory: "DeveloperApplication",
       operatingSystem: "Any",
       browserRequirements: "Requires JavaScript and a modern browser",

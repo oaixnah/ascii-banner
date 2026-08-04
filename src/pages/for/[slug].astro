@@ -5,12 +5,13 @@ import { indexedFonts } from "../../lib/font-data";
 
 export const getStaticPaths = () => guides.map((guide) => ({ params: { slug: guide.slug }, props: { guide } }));
 const { guide } = Astro.props;
+const site = Astro.site ?? Astro.url.origin;
 const schema = {
   "@context": "https://schema.org",
   "@type": "TechArticle",
   headline: guide.title,
   description: guide.description,
-  mainEntityOfPage: `https://asciibanner.dev/for/${guide.slug}/`,
+  mainEntityOfPage: new URL(`/for/${guide.slug}/`, site).href,
   author: { "@type": "Organization", name: "ASCII Banner" },
 };
 ---

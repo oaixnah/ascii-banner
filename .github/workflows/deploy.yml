@@ -22,6 +22,7 @@ jobs:
       ASTRO_TELEMETRY_DISABLED: "1"
       CI: "true"
       DEPLOY_BRANCH: gh-pages
+      SITE_URL: ${{ secrets.SITE_URL }}
       CONTACT_EMAIL: ${{ secrets.CONTACT_EMAIL }}
       GA_MEASUREMENT_ID: ${{ secrets.GA_MEASUREMENT_ID }}
       CLARITY_PROJECT_ID: ${{ secrets.CLARITY_PROJECT_ID }}

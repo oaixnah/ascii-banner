@@ -1,20 +1,34 @@
 import { defineConfig, envField } from "astro/config";
 import react from "@astrojs/react";
-import sitemap from "@astrojs/sitemap";
-import { readFileSync } from "node:fs";
+import { loadEnv } from "vite";
 
-const manifest = JSON.parse(
-  readFileSync(new URL("./src/data/font-manifest.generated.json", import.meta.url), "utf8"),
-);
-const nonIndexedFontPaths = new Set(
-  manifest.filter((font) => !font.indexed).map((font) => `/fonts/${font.slug}/`),
-);
+const fileEnv = loadEnv(process.env.NODE_ENV ?? "development", process.cwd(), "");
+const rawSiteUrl = process.env.SITE_URL ?? fileEnv.SITE_URL;
+if (!rawSiteUrl) {
+  throw new Error("SITE_URL is required. Set it to the public HTTPS origin, for example https://asciibanner.dev.");
+}
+
+let siteUrl;
+try {
+  const parsed = new URL(rawSiteUrl);
+  const isOriginOnly = parsed.pathname === "/" && !parsed.search && !parsed.hash;
+  const hasCredentials = Boolean(parsed.username || parsed.password);
+  if (parsed.protocol !== "https:" || !isOriginOnly || hasCredentials) throw new Error();
+  siteUrl = parsed.origin;
+} catch {
+  throw new Error("SITE_URL must be an HTTPS origin without a path, query, hash, or credentials.");
+}
 
 export default defineConfig({
-  site: "https://asciibanner.dev",
+  site: siteUrl,
   output: "static",
   env: {
     schema: {
+      SITE_URL: envField.string({
+        context: "server",
+        access: "secret",
+        url: true,
+      }),
       CONTACT_EMAIL: envField.string({
         context: "server",
         access: "secret",
@@ -46,12 +60,7 @@ export default defineConfig({
       redirectToDefaultLocale: false,
     },
   },
-  integrations: [
-    react(),
-    sitemap({
-      filter: (page) => !nonIndexedFontPaths.has(new URL(page).pathname),
-    }),
-  ],
+  integrations: [react()],
   vite: {
     worker: {
       format: "es",

@@ -585,9 +585,12 @@ test.describe("ASCII Banner generator", () => {
     await page.goto("/zh/?text=Ship%20It&width=100&layout=fitted");
     await expect(page.locator("html")).toHaveAttribute("lang", "zh-CN");
     await expect(page.getByRole("heading", { name: "输入一次，预览全部艺术字。" })).toBeVisible();
-    await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", "https://asciibanner.dev/zh/");
-    await expect(page.locator('link[rel="alternate"][hreflang="en"]')).toHaveAttribute("href", "https://asciibanner.dev/");
-    await expect(page.locator('link[rel="alternate"][hreflang="zh-CN"]')).toHaveAttribute("href", "https://asciibanner.dev/zh/");
+    const canonical = await page.locator('link[rel="canonical"]').getAttribute("href");
+    expect(canonical).not.toBeNull();
+    const siteOrigin = new URL(canonical!).origin;
+    await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", `${siteOrigin}/zh/`);
+    await expect(page.locator('link[rel="alternate"][hreflang="en"]')).toHaveAttribute("href", `${siteOrigin}/`);
+    await expect(page.locator('link[rel="alternate"][hreflang="zh-CN"]')).toHaveAttribute("href", `${siteOrigin}/zh/`);
 
     const navActions = page.locator(".nav-actions");
     await expect(navActions).toBeVisible();

@@ -2,12 +2,11 @@ import { readFile, stat } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
-const DEFAULT_SITE_URL = "https://asciibanner.dev";
-const REQUIRED_FILES = ["index.html", "404.html", "robots.txt", "sitemap-index.xml"] as const;
+const REQUIRED_FILES = ["index.html", "404.html", "robots.txt", "sitemap.xml"] as const;
 const HOST_SPECIFIC_FILES = ["CNAME", ".nojekyll"] as const;
 
 export interface VerifyDeployOptions {
-  siteUrl?: string;
+  siteUrl: string;
   expectedFontAssets?: string[];
 }
 
@@ -56,12 +55,12 @@ const normalizeAssetPath = (assetPath: string) => {
 
 export const verifyDeployOutput = async (
   distDir: string,
-  options: VerifyDeployOptions = {},
+  options: VerifyDeployOptions,
 ) => {
   const issues: string[] = [];
-  const site = new URL(options.siteUrl ?? DEFAULT_SITE_URL);
+  const site = new URL(options.siteUrl);
   const canonicalOrigin = site.origin;
-  const canonicalSitemap = new URL("/sitemap-index.xml", site).href;
+  const canonicalSitemap = new URL("/sitemap.xml", site).href;
 
   for (const requiredFile of REQUIRED_FILES) {
     if (!(await isFile(path.join(distDir, requiredFile)))) {
@@ -80,57 +79,31 @@ export const verifyDeployOutput = async (
     issues.push(`robots.txt must reference ${canonicalSitemap}`);
   }
 
-  const sitemapIndex = await readText(path.join(distDir, "sitemap-index.xml"));
-  const sitemapLocations = sitemapIndex ? extractLocations(sitemapIndex) : [];
-  if (sitemapIndex && sitemapLocations.length === 0) {
-    issues.push("sitemap-index.xml must reference at least one sitemap file");
+  const sitemap = await readText(path.join(distDir, "sitemap.xml"));
+  const pageLocations = sitemap ? extractLocations(sitemap) : [];
+  if (sitemap && pageLocations.length === 0) {
+    issues.push("sitemap.xml must contain at least one page URL");
   }
 
-  for (const location of sitemapLocations) {
-    let sitemapUrl: URL;
+  for (const pageLocation of pageLocations) {
+    let pageUrl: URL;
     try {
-      sitemapUrl = new URL(location);
+      pageUrl = new URL(pageLocation);
     } catch {
-      issues.push(`Invalid sitemap URL: ${location}`);
+      issues.push(`Invalid page URL in sitemap.xml: ${pageLocation}`);
       continue;
     }
-    if (sitemapUrl.origin !== canonicalOrigin) {
-      issues.push(`Sitemap URL must use ${canonicalOrigin}: ${location}`);
+    if (pageUrl.origin !== canonicalOrigin) {
+      issues.push(`Page URL must use ${canonicalOrigin}: ${pageLocation}`);
       continue;
     }
-    if (sitemapUrl.search || sitemapUrl.hash || !/^\/sitemap-[^/]+\.xml$/.test(sitemapUrl.pathname)) {
-      issues.push(`Invalid sitemap file URL: ${location}`);
+    if (pageUrl.search || pageUrl.hash) {
+      issues.push(`Page URL must not contain a query or hash: ${pageLocation}`);
       continue;
     }
-
-    const sitemapFile = decodeURIComponent(sitemapUrl.pathname.slice(1));
-    const sitemapPath = resolveOutputPath(distDir, sitemapFile);
-    if (!sitemapPath || !(await isFile(sitemapPath))) {
-      issues.push(`Missing sitemap referenced by index: ${sitemapFile}`);
-      continue;
-    }
-
-    const sitemap = await readText(sitemapPath);
-    const pageLocations = sitemap ? extractLocations(sitemap) : [];
-    if (sitemap && pageLocations.length === 0) {
-      issues.push(`${sitemapFile} must contain at least one page URL`);
-    }
-    for (const pageLocation of pageLocations) {
-      let pageUrl: URL;
-      try {
-        pageUrl = new URL(pageLocation);
-      } catch {
-        issues.push(`Invalid page URL in ${sitemapFile}: ${pageLocation}`);
-        continue;
-      }
-      if (pageUrl.origin !== canonicalOrigin) {
-        issues.push(`Page URL must use ${canonicalOrigin}: ${pageLocation}`);
-        continue;
-      }
-      const outputPath = resolveOutputPath(distDir, routeOutputPath(pageUrl.pathname));
-      if (!outputPath || !(await isFile(outputPath))) {
-        issues.push(`Missing page referenced by sitemap: ${pageUrl.pathname}`);
-      }
+    const outputPath = resolveOutputPath(distDir, routeOutputPath(pageUrl.pathname));
+    if (!outputPath || !(await isFile(outputPath))) {
+      issues.push(`Missing page referenced by sitemap: ${pageUrl.pathname}`);
     }
   }
 
@@ -147,7 +120,7 @@ export const verifyDeployOutput = async (
   }
 
   return {
-    sitemapCount: sitemapLocations.length,
+    sitemapCount: sitemap && pageLocations.length > 0 ? 1 : 0,
     fontCount: options.expectedFontAssets?.length ?? 0,
   };
 };
@@ -167,8 +140,14 @@ if (isDirectRun) {
   const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
   const distDir = path.resolve(process.argv[2] ?? path.join(root, "dist"));
   try {
+    if (!process.env.SITE_URL) {
+      throw new Error("SITE_URL is required to verify deployment output.");
+    }
     const expectedFontAssets = await loadExpectedFontAssets();
-    const result = await verifyDeployOutput(distDir, { expectedFontAssets });
+    const result = await verifyDeployOutput(distDir, {
+      siteUrl: process.env.SITE_URL,
+      expectedFontAssets,
+    });
     console.log(`Deploy output verified: ${result.sitemapCount} sitemap(s), ${result.fontCount} font asset(s).`);
   } catch (error) {
     console.error(error instanceof Error ? error.message : error);

@@ -29,13 +29,14 @@ const related = indexedFonts.filter((candidate) => candidate.slug !== font.slug 
 const category = galleryMessages.zh.categories[font.category];
 const title = `${font.name} ASCII 艺术字生成器`;
 const description = `在线预览 ${font.name} FIGlet 字体，生成自定义 ASCII Banner，并复制为纯文本、Markdown 或源代码注释。`;
+const site = Astro.site ?? Astro.url.origin;
 const schema = {
   "@context": "https://schema.org",
   "@graph": [
     {
       "@type": "WebApplication",
       name: `${font.name} ASCII 艺术字生成器`,
-      url: `https://asciibanner.dev/zh/fonts/${font.slug}/`,
+      url: new URL(`/zh/fonts/${font.slug}/`, site).href,
       inLanguage: "zh-CN",
       applicationCategory: "DeveloperApplication",
       operatingSystem: "Any",
@@ -45,9 +46,9 @@ const schema = {
     {
       "@type": "BreadcrumbList",
       itemListElement: [
-        { "@type": "ListItem", position: 1, name: "ASCII Banner", item: "https://asciibanner.dev/zh/" },
-        { "@type": "ListItem", position: 2, name: "字体", item: "https://asciibanner.dev/zh/#popular-title" },
-        { "@type": "ListItem", position: 3, name: font.name, item: `https://asciibanner.dev/zh/fonts/${font.slug}/` },
+        { "@type": "ListItem", position: 1, name: "ASCII Banner", item: new URL("/zh/", site).href },
+        { "@type": "ListItem", position: 2, name: "字体", item: new URL("/zh/#popular-title", site).href },
+        { "@type": "ListItem", position: 3, name: font.name, item: new URL(`/zh/fonts/${font.slug}/`, site).href },
       ],
     },
   ],
