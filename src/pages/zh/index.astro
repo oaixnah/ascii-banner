@@ -1,0 +1,163 @@
+---
+import AdSlot from "../../components/AdSlot.astro";
+import BannerGallery from "../../components/BannerGallery";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { galleryMessages } from "../../i18n/ui";
+import { fonts, indexedFonts } from "../../lib/font-data";
+
+const title = "ASCII 艺术字生成器——一次预览全部 FIGlet 字体";
+const description = `输入一次文字，同时预览 ${fonts.length} 种 FIGlet 字体，并将 ASCII Banner 复制为纯文本、Markdown 或代码注释。免费、隐私友好、完全在浏览器本地运行。`;
+const faqs = [
+  {
+    question: "什么是 FIGlet 字体？",
+    answer: "FIGlet 字体是一种用较小 ASCII 字符组成大型字母的纯文本格式。每种字体都会定义字母的形状、高度和间距。",
+  },
+  {
+    question: "可以直接生成中文艺术字吗？",
+    answer: "暂时不可以。当前 FIGlet 字体库主要包含英文、数字和标准 ASCII 标点。中文版本提供完整中文界面和使用指南，但生成内容仍需使用 ASCII 字符。",
+  },
+  {
+    question: "怎样让 ASCII Banner 在 README 中保持对齐？",
+    answer: "请把结果放进 Markdown 围栏代码块。生成器的 Markdown 复制选项会自动添加代码围栏，让 GitHub 使用等宽字体并保留空格和换行。",
+  },
+  {
+    question: "输入内容会上传吗？",
+    answer: "不会。字体加载、艺术字生成、筛选和复制都在浏览器本地完成。最近输入只保存在当前浏览器，可逐项删除、在生成器中清空，或随网站数据一起移除；网站不会上传输入内容或将其加入分析事件。",
+  },
+];
+const schema = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebApplication",
+      name: "ASCII Banner 中文生成器",
+      url: "https://asciibanner.dev/zh/",
+      inLanguage: "zh-CN",
+      applicationCategory: "DeveloperApplication",
+      operatingSystem: "Any",
+      browserRequirements: "需要 JavaScript 和现代浏览器",
+      description,
+      offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+      featureList: ["一次预览全部 FIGlet 字体", "导出 Markdown", "导出源代码注释", "浏览器本地生成"],
+    },
+    {
+      "@type": "FAQPage",
+      inLanguage: "zh-CN",
+      mainEntity: faqs.map((faq) => ({
+        "@type": "Question",
+        name: faq.question,
+        acceptedAnswer: { "@type": "Answer", text: faq.answer },
+      })),
+    },
+  ],
+};
+const categories = galleryMessages.zh.categories;
+---
+
+<BaseLayout title={title} description={description} canonicalPath="/zh/" locale="zh" schema={schema}>
+  <div class="page-shell">
+    <section class="hero">
+      <span class="hero-badge">无需逐个选择，一次看全</span>
+      <h1>输入一次，<span>预览全部艺术字。</span></h1>
+      <p>在一个实时列表中浏览完整 FIGlet 字体库，再把结果直接复制到 README、终端或源代码中。</p>
+      <div class="hero-proof" aria-label="产品特点">
+        <span><i></i>同时预览 {fonts.length} 种字体</span>
+        <span><i></i>浏览器本地生成</span>
+        <span><i></i>适合代码工作流</span>
+        <span><i></i>无需注册</span>
+      </div>
+    </section>
+
+    <div id="gallery">
+      <BannerGallery fonts={fonts} locale="zh" languageSwitchPath="/" client:load />
+    </div>
+
+    <div class="section">
+      <AdSlot placement="zh-home-after-gallery" locale="zh" />
+    </div>
+
+    <section class="section" aria-labelledby="workflow-title">
+      <div class="section-heading">
+        <div>
+          <span class="eyebrow">从想法到提交</span>
+          <h2 id="workflow-title">真正能放进代码的文本。</h2>
+        </div>
+        <p>每个 Banner 都是可以搜索、比较、版本控制和复制粘贴的真实文本，而不是一张截图。</p>
+      </div>
+      <div class="workflow-grid">
+        <article class="workflow-card">
+          <span class="workflow-index">01 / 输入</span>
+          <h3>只写一次</h3>
+          <p>一个输入框更新完整字体库，不必在下拉框里反复切换才能知道每种样式的效果。</p>
+        </article>
+        <article class="workflow-card">
+          <span class="workflow-index">02 / 比较</span>
+          <h3>在真实文字中筛选</h3>
+          <p>按形状筛选、按名称搜索、收藏候选字体，并在复制前确认最终终端宽度。</p>
+        </article>
+        <article class="workflow-card">
+          <span class="workflow-index">03 / 使用</span>
+          <h3>复制正确格式</h3>
+          <p>导出纯文本、Markdown 代码块、C 风格块注释、# 行注释或 HTML/XML 注释。</p>
+        </article>
+      </div>
+      <div class="stats-grid">
+        <div class="stat-card"><strong>{fonts.length}</strong><span>种本地打包的 FIGlet 字体</span></div>
+        <div class="stat-card"><strong>0</strong><span>次上传或服务端生成请求</span></div>
+        <div class="stat-card"><strong>6</strong><span>种可直接复制的导出格式</span></div>
+      </div>
+    </section>
+
+    <section class="section" aria-labelledby="popular-title">
+      <div class="section-heading">
+        <div>
+          <span class="eyebrow">从经典字体开始</span>
+          <h2 id="popular-title">推荐 FIGlet 字体。</h2>
+        </div>
+        <p>这些字体详情页包含中文使用建议、尺寸信息、署名和可分享的单字体生成器。</p>
+      </div>
+      <div class="font-link-grid">
+        {indexedFonts.map((font) => (
+          <a class="font-link" href={`/zh/fonts/${font.slug}/`}>
+            <strong>{font.name}</strong>
+            <span>{font.height} 行 · {categories[font.category]}</span>
+          </a>
+        ))}
+      </div>
+    </section>
+
+    <section class="section" id="guides" aria-labelledby="guides-title">
+      <div class="section-heading">
+        <div>
+          <span class="eyebrow">正确使用</span>
+          <h2 id="guides-title">适合不同开发工作流的 Banner。</h2>
+        </div>
+        <p>了解怎样让 ASCII 艺术字在真实项目中保持清晰、可维护并正确对齐。</p>
+      </div>
+      <div class="guide-grid">
+        <a class="guide-card" href="/zh/for/github-readme/"><span>Markdown</span><h3>GitHub README</h3><p>保留空格和换行，为项目加入容易记住的文本标题。</p></a>
+        <a class="guide-card" href="/zh/for/code-comments/"><span>源代码</span><h3>代码注释标题</h3><p>为常见编程语言创建安全清晰的分区标记。</p></a>
+        <a class="guide-card" href="/zh/for/terminal-banner/"><span>Shell</span><h3>终端欢迎 Banner</h3><p>让 MOTD 和 Shell 输出适应真实终端列宽。</p></a>
+        <a class="guide-card" href="/zh/for/cli-apps/"><span>产品</span><h3>CLI 应用启动画面</h3><p>为命令行产品设计容易识别的开场界面。</p></a>
+      </div>
+    </section>
+
+    <section class="section" aria-labelledby="faq-title">
+      <div class="section-heading">
+        <div>
+          <span class="eyebrow">常见问题</span>
+          <h2 id="faq-title">ASCII 艺术字 FAQ。</h2>
+        </div>
+        <p>把 Banner 放进等宽环境之前，需要了解的字符支持、对齐和隐私信息。</p>
+      </div>
+      <div class="faq-list">
+        {faqs.map((faq, index) => (
+          <details open={index === 0}>
+            <summary>{faq.question}</summary>
+            <p>{faq.answer}</p>
+          </details>
+        ))}
+      </div>
+    </section>
+  </div>
+</BaseLayout>

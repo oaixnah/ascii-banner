@@ -1,0 +1,36 @@
+{
+  "name": "ascii-banner",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@11.15.1",
+  "type": "module",
+  "scripts": {
+    "dev": "pnpm run fonts:sync && ASTRO_TELEMETRY_DISABLED=1 astro dev",
+    "fonts:sync": "node scripts/sync-fonts.ts",
+    "prebuild": "pnpm run fonts:sync",
+    "build": "ASTRO_TELEMETRY_DISABLED=1 astro check && ASTRO_TELEMETRY_DISABLED=1 astro build",
+    "preview": "ASTRO_TELEMETRY_DISABLED=1 astro preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "pnpm run build && playwright test",
+    "verify:deploy": "node scripts/verify-deploy.ts"
+  },
+  "dependencies": {
+    "@astrojs/react": "6.0.2",
+    "@astrojs/sitemap": "3.7.3",
+    "astro": "7.1.6",
+    "figlet": "1.11.4",
+    "lucide-react": "1.28.0",
+    "react": "19.2.8",
+    "react-dom": "19.2.8"
+  },
+  "devDependencies": {
+    "@astrojs/check": "0.9.10",
+    "@playwright/test": "1.62.1",
+    "@types/node": "26.1.2",
+    "@types/react": "19.2.18",
+    "@types/react-dom": "19.2.4",
+    "typescript": "6.0.3",
+    "vitest": "4.1.10"
+  }
+}

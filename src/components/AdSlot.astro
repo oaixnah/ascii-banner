@@ -1,0 +1,28 @@
+---
+interface Props {
+  placement: string;
+  locale?: "en" | "zh";
+}
+
+const { placement, locale = "en" } = Astro.props;
+const enabled = import.meta.env.PUBLIC_ADS_ENABLED === "true";
+---
+
+{enabled && (
+  <aside class="ad-slot" data-ad-placement={placement} aria-label={locale === "zh" ? "广告" : "Advertisement"}>
+    <span>{locale === "zh" ? "广告" : "Advertisement"}</span>
+  </aside>
+)}
+
+<style>
+  .ad-slot {
+    min-height: 180px;
+    display: grid;
+    place-items: center;
+    border: 1px dashed var(--border-strong);
+    border-radius: var(--radius-lg);
+    color: var(--text-muted);
+    background: var(--surface-subtle);
+  }
+  .ad-slot span { font: 600 0.68rem/1 var(--font-sans); letter-spacing: 0.12em; text-transform: uppercase; }
+</style>

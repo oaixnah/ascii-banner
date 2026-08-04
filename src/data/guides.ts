@@ -1,0 +1,38 @@
+export const guides = [
+  {
+    slug: "github-readme",
+    eyebrow: "Markdown guide",
+    title: "ASCII banners for GitHub READMEs",
+    description: "Create a readable ASCII project title, preserve its spacing in Markdown, and keep your README accessible and easy to maintain.",
+    intro: "An ASCII banner can give an open-source project a recognizable title without adding a binary image to the repository. The key is keeping it short, readable, and fenced as code.",
+    recommendation: "Start with Standard, Slant, ANSI Shadow, or Small. These styles stay recognizable in both GitHub’s desktop layout and narrow mobile viewports.",
+    sample: "```text\n    _    ____  ___\n   / \\  |  _ \\|_ _|\n  / _ \\ | |_) || |\n / ___ \\|  __/ | |\n/_/   \\_\\_|   |___|\n```",
+  },
+  {
+    slug: "code-comments",
+    eyebrow: "Source guide",
+    title: "ASCII banners in code comments",
+    description: "Use ASCII art as a source-code section header without breaking syntax, linters, or line-width conventions.",
+    intro: "A banner works best in source code when it marks a genuinely important boundary: generated code, a subsystem, a protocol stage, or a file that developers should not edit manually.",
+    recommendation: "Choose a compact style and keep the output inside the project’s normal line limit. Small and Ogre are useful when an 80- or 100-column formatter is enforced.",
+    sample: "/*\n  ____ ___  ____  _____\n / ___/ _ \\|  _ \\| ____|\n| |  | | | | |_) |  _|\n| |__| |_| |  _ <| |___\n \\____\\___/|_| \\_\\_____|\n*/",
+  },
+  {
+    slug: "terminal-banner",
+    eyebrow: "Terminal guide",
+    title: "Terminal and MOTD ASCII banners",
+    description: "Design an ASCII welcome banner that fits real terminal widths and stays readable over SSH, shells, and server consoles.",
+    intro: "Terminal banners are useful for identifying a host, environment, or safety boundary before a user runs a command. They should communicate context quickly instead of filling the screen.",
+    recommendation: "Target 80 columns, avoid color as the only signal, and test through the narrowest SSH client your team uses. Standard, Banner3, and Small are reliable starting points.",
+    sample: "printf '%s\\n' '  ____  ____   ___  ____'\nprintf '%s\\n' ' |  _ \\|  _ \\ / _ \\|  _ \\'\nprintf '%s\\n' ' | |_) | |_) | | | | | | |'",
+  },
+  {
+    slug: "cli-apps",
+    eyebrow: "Product guide",
+    title: "ASCII launch screens for CLI apps",
+    description: "Add a memorable text logo to a command-line app while respecting startup speed, accessibility, and narrow terminals.",
+    intro: "A CLI banner is part of the product interface. Show it for interactive launches, but keep machine-readable output clean and provide a quiet or JSON mode for automation.",
+    recommendation: "Render a short product name once and store the resulting text with the application. Do not load a full font engine at every launch unless users need dynamic text.",
+    sample: "if (process.stdout.isTTY && !flags.quiet) {\n  console.log(BANNER);\n}\n\n// Skip decorative output in pipes and automation.",
+  },
+] as const;

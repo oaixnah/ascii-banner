@@ -1,0 +1,103 @@
+---
+import figlet from "figlet";
+import BannerGallery from "../../../components/BannerGallery";
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import { fontDescriptionsZh } from "../../../data/font-copy-zh";
+import { galleryMessages } from "../../../i18n/ui";
+import { indexedFonts } from "../../../lib/font-data";
+import type { FontManifestEntry } from "../../../lib/types";
+
+export const getStaticPaths = () =>
+  indexedFonts.map((font) => ({ params: { slug: font.slug }, props: { font } }));
+
+const { font } = Astro.props as { font: FontManifestEntry };
+const copy = fontDescriptionsZh[font.slug] ?? {
+  summary: `${font.name} 是完整 ASCII Banner 字体库中的一款 ${font.height} 行 FIGlet 字体。`,
+  bestFor: "简短 ASCII 标题、字体实验，以及字形能够保持清晰的各种等宽环境。",
+};
+let sample = "请使用下方交互式生成器预览字体。";
+try {
+  sample = figlet.textSync("CODE", {
+    font: font.name as never,
+    width: 120,
+    horizontalLayout: "default",
+  });
+} catch {
+  // 第三方字体构建时无法生成时保留可读说明。
+}
+const related = indexedFonts.filter((candidate) => candidate.slug !== font.slug && candidate.category === font.category).slice(0, 4);
+const category = galleryMessages.zh.categories[font.category];
+const title = `${font.name} ASCII 艺术字生成器`;
+const description = `在线预览 ${font.name} FIGlet 字体，生成自定义 ASCII Banner，并复制为纯文本、Markdown 或源代码注释。`;
+const schema = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebApplication",
+      name: `${font.name} ASCII 艺术字生成器`,
+      url: `https://asciibanner.dev/zh/fonts/${font.slug}/`,
+      inLanguage: "zh-CN",
+      applicationCategory: "DeveloperApplication",
+      operatingSystem: "Any",
+      description,
+      offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+    },
+    {
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        { "@type": "ListItem", position: 1, name: "ASCII Banner", item: "https://asciibanner.dev/zh/" },
+        { "@type": "ListItem", position: 2, name: "字体", item: "https://asciibanner.dev/zh/#popular-title" },
+        { "@type": "ListItem", position: 3, name: font.name, item: `https://asciibanner.dev/zh/fonts/${font.slug}/` },
+      ],
+    },
+  ],
+};
+---
+
+<BaseLayout title={title} description={description} locale="zh" schema={schema}>
+  <div class="page-shell">
+    <header class="article-hero">
+      <nav class="breadcrumbs" aria-label="面包屑导航"><a href="/zh/">首页</a><span>/</span><a href="/zh/#popular-title">字体</a><span>/</span><span>{font.name}</span></nav>
+      <span class="eyebrow">{category} FIGlet 字体</span>
+      <h1>{font.name} ASCII 字体。</h1>
+      <p>{copy.summary}</p>
+      <div class="static-ascii" aria-label={`${font.name} 字体示例`}><pre>{sample}</pre></div>
+    </header>
+
+    <BannerGallery
+      fonts={[font]}
+      focusFontSlug={font.slug}
+      compact
+      locale="zh"
+      languageSwitchPath={`/fonts/${font.slug}/`}
+      client:load
+    />
+
+    <div class="content-grid">
+      <article class="prose">
+        <h2>关于 {font.name} 字体</h2>
+        <p>{copy.summary} 它原生的 FIGlet 字符单元高度为 {font.height} 行，因此在放入终端或源代码前比较容易估算最终尺寸。</p>
+        <p><strong>适合场景：</strong>{copy.bestFor}</p>
+
+        <h2>怎样使用这个 Banner</h2>
+        <p>在上方生成器中输入简短单词或项目名称。如果结果要放进传统终端，可以先使用 80 列；README 或大型代码注释则可以选择更宽的目标。</p>
+        <p>终端和文本文件适合使用<strong>纯文本</strong>，GitHub 适合使用<strong>Markdown 代码块</strong>，需要直接放进源代码时则选择对应的注释格式。</p>
+
+        <h2>保持字符对齐</h2>
+        <p>ASCII 艺术字依赖每个字符占据相同宽度。请把结果放在代码块或其他等宽环境中，并避免让编辑器自动删除行首空格。</p>
+
+        <h2>相关{category}字体</h2>
+        <div class="font-link-grid">
+          {related.map((candidate) => (
+            <a class="font-link" href={`/zh/fonts/${candidate.slug}/`}><strong>{candidate.name}</strong><span>{candidate.height} 行</span></a>
+          ))}
+        </div>
+      </article>
+      <aside class="article-aside" aria-label="字体信息">
+        <div class="info-card"><span>原生高度</span><strong>{font.height} 行</strong></div>
+        <div class="info-card"><span>最大字形宽度</span><strong>{font.maxLength} 列</strong></div>
+        <div class="info-card"><span>字体署名</span><strong>{font.attribution}</strong></div>
+      </aside>
+    </div>
+  </div>
+</BaseLayout>

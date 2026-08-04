@@ -1,0 +1,296 @@
+---
+import { CLARITY_PROJECT_ID, GA_MEASUREMENT_ID } from "astro:env/server";
+import { siteMessages, type SiteLocale } from "../i18n/ui";
+import {
+  ANALYTICS_CONSENT_STORAGE_KEY,
+  ANALYTICS_CONSENT_MAX_AGE_MS,
+  ANALYTICS_CONSENT_VERSION,
+  ANALYTICS_PROMPT_SESSION_KEY,
+  parseAnalyticsConfig,
+} from "../lib/analytics";
+
+interface Props {
+  locale?: SiteLocale;
+}
+
+const { locale = "en" } = Astro.props;
+const copy = siteMessages[locale];
+const config = parseAnalyticsConfig(GA_MEASUREMENT_ID, CLARITY_PROJECT_ID);
+const privacyPath = locale === "zh" ? "/zh/privacy/" : "/privacy/";
+---
+
+<aside
+  id="analytics-consent-panel"
+  class="analytics-consent"
+  role="dialog"
+  aria-modal="false"
+  aria-labelledby="analytics-consent-title"
+  data-analytics-consent
+  data-ga-id={config.gaMeasurementId}
+  data-clarity-id={config.clarityProjectId}
+  data-storage-key={ANALYTICS_CONSENT_STORAGE_KEY}
+  data-storage-version={ANALYTICS_CONSENT_VERSION}
+  data-consent-max-age={ANALYTICS_CONSENT_MAX_AGE_MS}
+  data-prompt-session-key={ANALYTICS_PROMPT_SESSION_KEY}
+  hidden
+>
+  <div class="analytics-consent-heading">
+    <span class="eyebrow">{copy.analyticsConsentEyebrow}</span>
+    <span
+      class="analytics-consent-countdown"
+      data-analytics-countdown
+      data-template={copy.analyticsMinimizeTemplate}
+      aria-hidden="true"
+    >
+      {copy.analyticsMinimizeTemplate.replace("{seconds}", "5")}
+    </span>
+  </div>
+  <h2 id="analytics-consent-title">{copy.analyticsConsentTitle}</h2>
+  <p>{copy.analyticsConsentDescription} <a href={privacyPath}>{copy.analyticsConsentPrivacy}</a></p>
+  <div class="analytics-consent-actions">
+    <button type="button" class="analytics-decline" data-analytics-decline>{copy.analyticsDecline}</button>
+    <button type="button" class="analytics-accept" data-analytics-accept>{copy.analyticsAccept}</button>
+  </div>
+</aside>
+<button
+  type="button"
+  class="analytics-consent-toggle"
+  data-analytics-consent-toggle
+  aria-controls="analytics-consent-panel"
+  aria-expanded="false"
+  hidden
+>{copy.analyticsReviewChoice}</button>
+
+<script is:inline>
+  (() => {
+    const panel = document.querySelector("[data-analytics-consent]");
+    if (!(panel instanceof HTMLElement) || panel.dataset.initialized === "true") return;
+    panel.dataset.initialized = "true";
+
+    const gaId = panel.dataset.gaId;
+    const clarityId = panel.dataset.clarityId;
+    const storageKey = panel.dataset.storageKey;
+    const storageVersion = Number(panel.dataset.storageVersion);
+    const consentMaxAge = Number(panel.dataset.consentMaxAge);
+    const promptSessionKey = panel.dataset.promptSessionKey;
+    if (
+      !gaId
+      || !clarityId
+      || !storageKey
+      || !promptSessionKey
+      || !Number.isInteger(storageVersion)
+      || !Number.isFinite(consentMaxAge)
+    ) return;
+
+    const settingsButtons = document.querySelectorAll("[data-analytics-settings]");
+    const promptToggle = document.querySelector("[data-analytics-consent-toggle]");
+    const countdownLabel = panel.querySelector("[data-analytics-countdown]");
+    const acceptButton = panel.querySelector("[data-analytics-accept]");
+    const declineButton = panel.querySelector("[data-analytics-decline]");
+    let currentStatus = null;
+    let countdownInterval = 0;
+    let collapseTimeout = 0;
+
+    const clearCountdown = () => {
+      window.clearInterval(countdownInterval);
+      window.clearTimeout(collapseTimeout);
+      countdownInterval = 0;
+      collapseTimeout = 0;
+      if (countdownLabel instanceof HTMLElement) countdownLabel.hidden = true;
+    };
+
+    const readStatus = () => {
+      try {
+        const parsed = JSON.parse(window.localStorage.getItem(storageKey) || "null");
+        const age = Date.now() - parsed?.decidedAt;
+        if (
+          parsed?.version === storageVersion
+          && (parsed.status === "granted" || parsed.status === "denied")
+          && Number.isFinite(age)
+          && age >= 0
+          && age < consentMaxAge
+        ) {
+          return parsed.status;
+        }
+        window.localStorage.removeItem(storageKey);
+      } catch {
+        // Storage can be unavailable or contain stale data.
+      }
+      return null;
+    };
+
+    const saveStatus = (status) => {
+      try {
+        window.localStorage.setItem(storageKey, JSON.stringify({
+          version: storageVersion,
+          status,
+          decidedAt: Date.now(),
+        }));
+      } catch {
+        // Consent still applies for this page when storage is unavailable.
+      }
+      currentStatus = status;
+    };
+
+    const googleConsent = (command, analyticsStorage) => {
+      window.dataLayer = window.dataLayer || [];
+      window.gtag = window.gtag || function () { window.dataLayer.push(arguments); };
+      window.gtag("consent", command, {
+        ad_storage: "denied",
+        ad_user_data: "denied",
+        ad_personalization: "denied",
+        analytics_storage: analyticsStorage,
+      });
+    };
+
+    const loadGoogleAnalytics = () => {
+      if (document.querySelector("script[data-google-analytics]")) return;
+      googleConsent("default", "denied");
+      window[`ga-disable-${gaId}`] = false;
+      googleConsent("update", "granted");
+
+      const script = document.createElement("script");
+      script.async = true;
+      script.src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(gaId)}`;
+      script.dataset.googleAnalytics = "true";
+      document.head.append(script);
+
+      window.gtag("js", new Date());
+      window.gtag("config", gaId, {
+        send_page_view: false,
+        allow_google_signals: false,
+        allow_ad_personalization_signals: false,
+      });
+      window.gtag("event", "page_view", {
+        page_title: document.title,
+        page_location: `${window.location.origin}${window.location.pathname}`,
+        page_path: window.location.pathname,
+        page_referrer: "",
+      });
+    };
+
+    const loadClarity = () => {
+      if (new URLSearchParams(window.location.search).has("text")) return;
+      if (document.querySelector("script[data-microsoft-clarity]")) return;
+
+      window.clarity = window.clarity || function () {
+        (window.clarity.q = window.clarity.q || []).push(arguments);
+      };
+      window.clarity("consentv2", {
+        ad_Storage: "denied",
+        analytics_Storage: "granted",
+      });
+
+      const script = document.createElement("script");
+      script.async = true;
+      script.src = `https://www.clarity.ms/tag/${encodeURIComponent(clarityId)}`;
+      script.dataset.microsoftClarity = "true";
+      document.head.append(script);
+    };
+
+    const enableAnalytics = () => {
+      loadGoogleAnalytics();
+      loadClarity();
+    };
+
+    const disableAnalytics = () => {
+      window[`ga-disable-${gaId}`] = true;
+      if (typeof window.gtag === "function") googleConsent("update", "denied");
+      if (typeof window.clarity === "function") {
+        window.clarity("consentv2", {
+          ad_Storage: "denied",
+          analytics_Storage: "denied",
+        });
+      }
+    };
+
+    const showPanel = (withCountdown = false) => {
+      clearCountdown();
+      panel.hidden = false;
+      if (promptToggle instanceof HTMLElement) promptToggle.hidden = true;
+      promptToggle?.setAttribute("aria-expanded", "true");
+      document.body.classList.add("analytics-consent-pending");
+      if (!withCountdown) return;
+
+      let seconds = 5;
+      if (countdownLabel instanceof HTMLElement) {
+        countdownLabel.hidden = false;
+        countdownLabel.textContent = countdownLabel.dataset.template?.replace("{seconds}", String(seconds)) || countdownLabel.textContent;
+      }
+      countdownInterval = window.setInterval(() => {
+        seconds -= 1;
+        if (countdownLabel instanceof HTMLElement && seconds > 0) {
+          countdownLabel.textContent = countdownLabel.dataset.template?.replace("{seconds}", String(seconds)) || countdownLabel.textContent;
+        }
+      }, 1000);
+      collapseTimeout = window.setTimeout(() => collapsePanel(true), 5000);
+    };
+
+    const hidePanel = () => {
+      clearCountdown();
+      panel.hidden = true;
+      if (promptToggle instanceof HTMLElement) promptToggle.hidden = true;
+      promptToggle?.setAttribute("aria-expanded", "false");
+      document.body.classList.remove("analytics-consent-pending");
+    };
+
+    const collapsePanel = (rememberForSession = false) => {
+      clearCountdown();
+      panel.hidden = true;
+      if (promptToggle instanceof HTMLElement) promptToggle.hidden = false;
+      promptToggle?.setAttribute("aria-expanded", "false");
+      document.body.classList.remove("analytics-consent-pending");
+      if (rememberForSession) {
+        try {
+          window.sessionStorage.setItem(promptSessionKey, "1");
+        } catch {
+          // A collapsed prompt can safely reappear when session storage is unavailable.
+        }
+      }
+    };
+
+    settingsButtons.forEach((button) => button.addEventListener("click", () => {
+      showPanel();
+      declineButton?.focus();
+    }));
+    promptToggle?.addEventListener("click", () => {
+      showPanel();
+      declineButton?.focus();
+    });
+
+    acceptButton?.addEventListener("click", () => {
+      saveStatus("granted");
+      hidePanel();
+      enableAnalytics();
+    });
+
+    declineButton?.addEventListener("click", () => {
+      const shouldReload = currentStatus === "granted";
+      saveStatus("denied");
+      disableAnalytics();
+      hidePanel();
+      if (shouldReload) window.location.reload();
+    });
+
+    panel.addEventListener("keydown", (event) => {
+      if (event.key !== "Escape") return;
+      if (currentStatus) hidePanel();
+      else collapsePanel(true);
+      if (promptToggle instanceof HTMLElement && !promptToggle.hidden) promptToggle.focus();
+    });
+
+    currentStatus = readStatus();
+    if (currentStatus === "granted") enableAnalytics();
+    else if (currentStatus === "denied") disableAnalytics();
+    else {
+      let wasCollapsed = false;
+      try {
+        wasCollapsed = window.sessionStorage.getItem(promptSessionKey) === "1";
+      } catch {
+        // Fall back to the short prompt when session storage is unavailable.
+      }
+      if (wasCollapsed) collapsePanel();
+      else showPanel(true);
+    }
+  })();
+</script>

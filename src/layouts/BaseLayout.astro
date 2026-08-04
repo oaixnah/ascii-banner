@@ -1,0 +1,147 @@
+---
+import "../styles/global.css";
+import AnalyticsConsent from "../components/AnalyticsConsent.astro";
+import { siteMessages, type SiteLocale } from "../i18n/ui";
+import { fonts } from "../lib/font-data";
+
+interface Props {
+  title: string;
+  description: string;
+  canonicalPath?: string | null;
+  noindex?: boolean;
+  schema?: Record<string, unknown> | Array<Record<string, unknown>>;
+  locale?: SiteLocale;
+  hasTranslation?: boolean;
+  languageSwitchPath?: string;
+}
+
+const {
+  title,
+  description,
+  canonicalPath = Astro.url.pathname,
+  noindex = false,
+  schema,
+  locale = "en",
+  hasTranslation = true,
+  languageSwitchPath,
+} = Astro.props;
+const copy = siteMessages[locale];
+const canonical = canonicalPath === null ? null : new URL(canonicalPath, Astro.site ?? Astro.url.origin);
+const socialImage = new URL("/og.png", Astro.site ?? Astro.url.origin);
+const fullTitle = title.includes("ASCII Banner") ? title : `${title} | ASCII Banner`;
+const metadataPath = canonical?.pathname ?? Astro.url.pathname;
+const englishPath = locale === "zh" ? metadataPath.replace(/^\/zh(?=\/|$)/, "") || "/" : metadataPath;
+const chinesePath = locale === "zh" ? metadataPath : englishPath === "/" ? "/zh/" : `/zh${englishPath}`;
+const englishUrl = new URL(englishPath, Astro.site ?? Astro.url.origin);
+const chineseUrl = new URL(chinesePath, Astro.site ?? Astro.url.origin);
+const defaultSwitchPath = locale === "en" ? (hasTranslation ? chinesePath : "/zh/") : englishPath;
+const switchPath = languageSwitchPath ?? defaultSwitchPath;
+const switchHref = switchPath;
+const homePath = locale === "zh" ? "/zh/" : "/";
+const pathFor = (path: string) => locale === "zh" ? `/zh${path}` : path;
+---
+
+<!doctype html>
+<html lang={copy.htmlLang}>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="referrer" content="strict-origin" />
+    <meta name="generator" content={Astro.generator} />
+    <meta name="description" content={description} />
+    {noindex && <meta name="robots" content="noindex,follow" />}
+    {canonical && <link rel="canonical" href={canonical} />}
+    {hasTranslation && (
+      <>
+        <link rel="alternate" hreflang="en" href={englishUrl} />
+        <link rel="alternate" hreflang="zh-CN" href={chineseUrl} />
+        <link rel="alternate" hreflang="x-default" href={englishUrl} />
+      </>
+    )}
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="ASCII Banner" />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    {canonical && <meta property="og:url" content={canonical} />}
+    <meta property="og:locale" content={copy.ogLocale} />
+    {hasTranslation && <meta property="og:locale:alternate" content={copy.alternateOgLocale} />}
+    <meta property="og:image" content={socialImage} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content={copy.socialImageAlt} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={fullTitle} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={socialImage} />
+    {schema && <script is:inline type="application/ld+json" set:html={JSON.stringify(schema)} />}
+    <title>{fullTitle}</title>
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="header-inner">
+        <a class="brand" href={homePath} aria-label={copy.homeLabel}>
+          <span class="brand-mark">&gt;_</span>
+          <span>ASCII Banner</span>
+        </a>
+        <nav class="site-nav" aria-label={copy.mainNavigation}>
+          <a href={`${homePath}#gallery`}>{copy.allFonts}</a>
+          <a href={`${homePath}#guides`}>{copy.guides}</a>
+          <a href={pathFor("/about/")}>{copy.about}</a>
+          <span class="nav-actions">
+            <a class="nav-cta" href={`${homePath}#gallery`}>{copy.openGenerator}</a>
+            <a
+              class="language-switch"
+              href={switchHref}
+              hreflang={locale === "en" ? "zh-CN" : "en"}
+              lang={locale === "en" ? "zh-CN" : "en"}
+              aria-label={copy.languageSwitchLabel}
+              data-language-switch
+            >{copy.languageSwitch}</a>
+          </span>
+        </nav>
+      </div>
+    </header>
+    <main>
+      <slot />
+    </main>
+    <footer class="site-footer">
+      <div class="footer-inner">
+        <div class="footer-brand">
+          <a class="brand" href={homePath}>
+            <span class="brand-mark">&gt;_</span>
+            <span>ASCII Banner</span>
+          </a>
+          <p>{copy.footerSummary}</p>
+        </div>
+        <div class="footer-column">
+          <strong>{copy.generate}</strong>
+          <a href={`${homePath}#gallery`}>{copy.allFonts}</a>
+          <a href={pathFor("/fonts/standard/")}>Standard</a>
+          <a href={pathFor("/fonts/ansi-shadow/")}>ANSI Shadow</a>
+          <a href={pathFor("/fonts/slant/")}>Slant</a>
+        </div>
+        <div class="footer-column">
+          <strong>{copy.useCases}</strong>
+          <a href={pathFor("/for/github-readme/")}>{copy.githubReadme}</a>
+          <a href={pathFor("/for/code-comments/")}>{copy.codeComments}</a>
+          <a href={pathFor("/for/terminal-banner/")}>{copy.terminalBanner}</a>
+          <a href={pathFor("/for/cli-apps/")}>{copy.cliApps}</a>
+        </div>
+        <div class="footer-column">
+          <strong>{copy.company}</strong>
+          <a href={pathFor("/about/")}>{copy.about}</a>
+          <a href={pathFor("/contact/")}>{copy.contact}</a>
+          <a href={pathFor("/privacy/")}>{copy.privacy}</a>
+          <a href={pathFor("/terms/")}>{copy.terms}</a>
+          <button type="button" class="footer-settings-button" data-analytics-settings>{copy.analyticsSettings}</button>
+        </div>
+        <div class="footer-bottom">
+          <span>© {new Date().getFullYear()} ASCII Banner. {copy.footerTagline}</span>
+          <span>{copy.footerFacts(fonts.length)}</span>
+        </div>
+      </div>
+    </footer>
+    <AnalyticsConsent locale={locale} />
+  </body>
+</html>

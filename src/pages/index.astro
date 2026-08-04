@@ -1,0 +1,159 @@
+---
+import AdSlot from "../components/AdSlot.astro";
+import BannerGallery from "../components/BannerGallery";
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { fonts, indexedFonts } from "../lib/font-data";
+
+const title = "ASCII Banner Generator – Preview Every FIGlet Font";
+const description = `Type once and preview ${fonts.length} FIGlet fonts at the same time. Copy ASCII banners as raw text, Markdown, or code comments—free, private, and browser-based.`;
+const faqs = [
+  {
+    question: "What is a FIGlet font?",
+    answer: "A FIGlet font is a plain-text description of large letters made from smaller ASCII characters. Each font controls the shape, height, and spacing of the generated banner.",
+  },
+  {
+    question: "How do I keep an ASCII banner aligned in a README?",
+    answer: "Paste it inside a fenced Markdown code block. The generator’s Markdown copy option wraps the banner for you so GitHub renders it with preserved whitespace and a monospace font.",
+  },
+  {
+    question: "Does my text leave the browser?",
+    answer: "No. Font loading, rendering, filtering, and copying happen locally in your browser. Recent text history is saved only in this browser and can be deleted item by item, cleared in the generator, or removed with site data. It is never uploaded or included in analytics.",
+  },
+  {
+    question: "Why do some banners wrap?",
+    answer: "FIGlet output is measured in terminal columns. Choose a wider target, a compact font, or shorter input when the result needs to fit an 80-column terminal or source file.",
+  },
+];
+const schema = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebApplication",
+      name: "ASCII Banner",
+      url: "https://asciibanner.dev/",
+      applicationCategory: "DeveloperApplication",
+      operatingSystem: "Any",
+      browserRequirements: "Requires JavaScript and a modern browser",
+      description,
+      offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+      featureList: ["Preview every FIGlet font", "Markdown export", "Source-code comment export", "Local browser rendering"],
+    },
+    {
+      "@type": "FAQPage",
+      mainEntity: faqs.map((faq) => ({
+        "@type": "Question",
+        name: faq.question,
+        acceptedAnswer: { "@type": "Answer", text: faq.answer },
+      })),
+    },
+  ],
+};
+---
+
+<BaseLayout title={title} description={description} canonicalPath="/" schema={schema}>
+  <div class="page-shell">
+    <section class="hero">
+      <span class="hero-badge">No dropdowns. No guesswork.</span>
+      <h1>Your text. <span>Every banner.</span></h1>
+      <p>Scan the complete FIGlet library in one live gallery, then copy the exact format your README, terminal, or source file needs.</p>
+      <div class="hero-proof" aria-label="Product highlights">
+        <span><i></i>{fonts.length} fonts at once</span>
+        <span><i></i>Runs in your browser</span>
+        <span><i></i>Code-ready exports</span>
+        <span><i></i>No sign-up</span>
+      </div>
+    </section>
+
+    <div id="gallery">
+      <BannerGallery fonts={fonts} locale="en" languageSwitchPath="/zh/" client:load />
+    </div>
+
+    <div class="section">
+      <AdSlot placement="home-after-gallery" />
+    </div>
+
+    <section class="section" aria-labelledby="workflow-title">
+      <div class="section-heading">
+        <div>
+          <span class="eyebrow">From idea to commit</span>
+          <h2 id="workflow-title">Made for code, not screenshots.</h2>
+        </div>
+        <p>Every banner stays real text. Search it, diff it, version it, and paste it wherever a fixed-width grid works.</p>
+      </div>
+      <div class="workflow-grid">
+        <article class="workflow-card">
+          <span class="workflow-index">01 / TYPE</span>
+          <h3>Write once</h3>
+          <p>One input updates the full font library. No cycling through a selector to discover what each style looks like.</p>
+        </article>
+        <article class="workflow-card">
+          <span class="workflow-index">02 / SCAN</span>
+          <h3>Compare in context</h3>
+          <p>Filter by shape, search by name, favorite strong candidates, and check the exact terminal width before copying.</p>
+        </article>
+        <article class="workflow-card">
+          <span class="workflow-index">03 / SHIP</span>
+          <h3>Copy the right wrapper</h3>
+          <p>Export clean text, a Markdown fence, a C-style block, a hash comment, or an HTML/XML comment.</p>
+        </article>
+      </div>
+      <div class="stats-grid">
+        <div class="stat-card"><strong>{fonts.length}</strong><span>FIGlet fonts bundled locally</span></div>
+        <div class="stat-card"><strong>0</strong><span>uploads or server render calls</span></div>
+        <div class="stat-card"><strong>6</strong><span>copy-ready export formats</span></div>
+      </div>
+    </section>
+
+    <section class="section" aria-labelledby="popular-title">
+      <div class="section-heading">
+        <div>
+          <span class="eyebrow">Start with a classic</span>
+          <h2 id="popular-title">Featured FIGlet fonts.</h2>
+        </div>
+        <p>These editorial font pages include practical sizing notes, attribution, and a focused generator for sharing one style.</p>
+      </div>
+      <div class="font-link-grid">
+        {indexedFonts.map((font) => (
+          <a class="font-link" href={`/fonts/${font.slug}/`}>
+            <strong>{font.name}</strong>
+            <span>{font.height} rows · {font.category}</span>
+          </a>
+        ))}
+      </div>
+    </section>
+
+    <section class="section" id="guides" aria-labelledby="guides-title">
+      <div class="section-heading">
+        <div>
+          <span class="eyebrow">Use it well</span>
+          <h2 id="guides-title">A banner for every workflow.</h2>
+        </div>
+        <p>Practical patterns for keeping ASCII art readable, maintainable, and correctly aligned in real projects.</p>
+      </div>
+      <div class="guide-grid">
+        <a class="guide-card" href="/for/github-readme/"><span>Markdown</span><h3>GitHub README banners</h3><p>Preserve spacing and add a memorable project title.</p></a>
+        <a class="guide-card" href="/for/code-comments/"><span>Source</span><h3>Code comment headers</h3><p>Create safe section dividers for common languages.</p></a>
+        <a class="guide-card" href="/for/terminal-banner/"><span>Shell</span><h3>Terminal welcome banners</h3><p>Fit MOTD and shell output to real column limits.</p></a>
+        <a class="guide-card" href="/for/cli-apps/"><span>Product</span><h3>CLI app launch screens</h3><p>Give a command-line product a recognizable opening.</p></a>
+      </div>
+    </section>
+
+    <section class="section" aria-labelledby="faq-title">
+      <div class="section-heading">
+        <div>
+          <span class="eyebrow">The fine print</span>
+          <h2 id="faq-title">ASCII banner FAQ.</h2>
+        </div>
+        <p>Everything you need to move a banner from this page into a fixed-width environment without breaking it.</p>
+      </div>
+      <div class="faq-list">
+        {faqs.map((faq, index) => (
+          <details open={index === 0}>
+            <summary>{faq.question}</summary>
+            <p>{faq.answer}</p>
+          </details>
+        ))}
+      </div>
+    </section>
+  </div>
+</BaseLayout>

@@ -1,0 +1,80 @@
+---
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import { guidesZh } from "../../../data/guides-zh";
+import { indexedFonts } from "../../../lib/font-data";
+
+export const getStaticPaths = () => guidesZh.map((guide) => ({ params: { slug: guide.slug }, props: { guide } }));
+const { guide } = Astro.props;
+const schema = {
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  inLanguage: "zh-CN",
+  headline: guide.title,
+  description: guide.description,
+  mainEntityOfPage: `https://asciibanner.dev/zh/for/${guide.slug}/`,
+  author: { "@type": "Organization", name: "ASCII Banner" },
+};
+---
+
+<BaseLayout title={guide.title} description={guide.description} locale="zh" schema={schema}>
+  <div class="page-shell">
+    <header class="article-hero">
+      <nav class="breadcrumbs" aria-label="面包屑导航"><a href="/zh/">首页</a><span>/</span><a href="/zh/#guides">使用指南</a><span>/</span><span>{guide.title}</span></nav>
+      <span class="eyebrow">{guide.eyebrow}</span>
+      <h1>{guide.title}</h1>
+      <p>{guide.description}</p>
+    </header>
+
+    <div class="content-grid">
+      <article class="prose">
+        <h2>为什么使用文本 Banner？</h2>
+        <p>{guide.intro}</p>
+        <div class="callout">{guide.recommendation}</div>
+
+        <h2>一个安全的起始模式</h2>
+        <pre><code>{guide.sample}</code></pre>
+
+        {guide.slug === "github-readme" && (
+          <>
+            <h2>使用围栏代码块</h2>
+            <p>三个反引号可以保留行首空格和换行。可以添加 <code>text</code> 语言标记，避免语法高亮器为单个标点添加颜色。</p>
+            <h2>保留普通项目标题</h2>
+            <p>ASCII 艺术字属于视觉文本，但不应要求屏幕阅读器和搜索引擎解析它。请在 Banner 上方或下方保留普通 Markdown 标题。</p>
+          </>
+        )}
+        {guide.slug === "code-comments" && (
+          <>
+            <h2>为编程语言选择正确包装</h2>
+            <p>JavaScript、TypeScript、Go、Rust、Java、C 和 C++ 可以使用块注释；Shell、Python、Ruby 和 YAML 可以使用 # 前缀导出。生成器会处理意外出现的注释结束序列。</p>
+            <h2>注意代码格式化工具</h2>
+            <p>一些格式化工具会重新排列长注释。请只在工具能够原样保留文本块的位置使用装饰标题，或者按照工具文档排除这一小段区域。</p>
+          </>
+        )}
+        {guide.slug === "terminal-banner" && (
+          <>
+            <h2>按照最窄连接设计</h2>
+            <p>80 列仍然是实用基准。较长的主机名和环境名称通常更适合紧凑字体，而不是大型展示字体。</p>
+            <h2>让 Banner 具有实际信息</h2>
+            <p>在艺术字后使用普通文本标明环境、负责人或支持方式。生产环境警告不能只依赖 Banner 表达。</p>
+          </>
+        )}
+        {guide.slug === "cli-apps" && (
+          <>
+            <h2>只在交互运行时输出装饰内容</h2>
+            <p>检查标准输出是否连接到终端。用于管道、测试或 JSON 工作流的命令应返回结构化结果，不应包含装饰性开场。</p>
+            <h2>保存最终 Banner</h2>
+            <p>产品名称稳定后，把生成结果复制到常量或文本资源中。这样可以保证快速启动，也不必随 CLI 分发数百种字体。</p>
+          </>
+        )}
+
+        <h2>生成你的版本</h2>
+        <p><a href="/zh/#gallery">打开完整字体库</a>，输入最终文字并设置目标宽度，然后使用适合当前工作流的包装格式复制结果。</p>
+      </article>
+      <aside class="article-aside" aria-label="推荐字体">
+        {indexedFonts.slice(0, 3).map((font) => (
+          <a class="info-card" href={`/zh/fonts/${font.slug}/`}><span>试试这个字体</span><strong>{font.name} →</strong></a>
+        ))}
+      </aside>
+    </div>
+  </div>
+</BaseLayout>

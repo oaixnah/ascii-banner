@@ -1,0 +1,22 @@
+---
+import LegalPage from "../components/LegalPage.astro";
+---
+<LegalPage title="Privacy policy" description="What ASCII Banner stores, how optional analytics works, and how you can control it." updated="August 5, 2026">
+  <h2>Banner text</h2>
+  <p>Your banner text is processed locally in your browser. Text you commit is kept in a recent-history list in this browser so you can reuse it. It is not submitted to an ASCII Banner server, stored in a server database, or included in analytics events.</p>
+  <h2>Device preferences</h2>
+  <p>Favorite fonts and up to 10 recent text entries are saved in your browser’s local storage. History entries can be deleted individually or cleared from the generator; both preferences can also be removed by clearing site data. Shared URLs may include text that you explicitly place in the URL; anyone receiving that URL can read it.</p>
+  <h2>Server logs</h2>
+  <p>The hosting provider may process standard request information such as IP address, browser type, requested path, and time of access for security and reliability. ASCII Banner does not combine this information with user profiles.</p>
+  <h2>Optional analytics</h2>
+  <p>Google Analytics and Microsoft Clarity load only after you choose “Allow analytics.” Google Analytics measures page visits using URLs with query strings and fragments removed. Microsoft Clarity provides aggregate interaction insights, heatmaps, and masked session recordings. These providers may process device, browser, approximate location, performance, and interaction information under their own terms.</p>
+  <p>The generator is explicitly masked from Clarity. Clarity is not loaded on pages whose URL contains a shared <code>text</code> parameter, and share destinations do not expose banner text in a tracked link target. Input history and generated artwork are not sent as custom analytics events.</p>
+  <h2>Your analytics choice</h2>
+  <p>Your choice is stored in this browser under <code>ascii-banner:analytics-consent</code> for 15 days. After it expires, the site asks again on your next visit. Until permission is granted, neither analytics provider is requested. If you do not choose within five seconds, the prompt minimizes and analytics stays disabled; the smaller prompt or “Analytics settings” in the footer can reopen it. Revoking permission updates both providers, reloads the page, and prevents their scripts from loading again.</p>
+  <h2>Advertising</h2>
+  <p>The site does not currently load advertising code. Advertising storage, advertising user data, and ad personalization remain denied even when optional analytics is allowed.</p>
+  <h2>Regional consent</h2>
+  <p>If personalized advertising is introduced for visitors in the EEA, United Kingdom, or Switzerland, ASCII Banner will use a Google-certified consent management platform and will not request personalized ads before the required choice is recorded.</p>
+  <h2>Contact</h2>
+  <p>Questions about this policy can be sent through the <a href="/contact/">contact page</a>.</p>
+</LegalPage>

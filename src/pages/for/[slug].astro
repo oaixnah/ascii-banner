@@ -1,0 +1,79 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { guides } from "../../data/guides";
+import { indexedFonts } from "../../lib/font-data";
+
+export const getStaticPaths = () => guides.map((guide) => ({ params: { slug: guide.slug }, props: { guide } }));
+const { guide } = Astro.props;
+const schema = {
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  headline: guide.title,
+  description: guide.description,
+  mainEntityOfPage: `https://asciibanner.dev/for/${guide.slug}/`,
+  author: { "@type": "Organization", name: "ASCII Banner" },
+};
+---
+
+<BaseLayout title={guide.title} description={guide.description} schema={schema}>
+  <div class="page-shell">
+    <header class="article-hero">
+      <nav class="breadcrumbs" aria-label="Breadcrumb"><a href="/">Home</a><span>/</span><a href="/#guides">Guides</a><span>/</span><span>{guide.title}</span></nav>
+      <span class="eyebrow">{guide.eyebrow}</span>
+      <h1>{guide.title}</h1>
+      <p>{guide.description}</p>
+    </header>
+
+    <div class="content-grid">
+      <article class="prose">
+        <h2>Why use a text banner?</h2>
+        <p>{guide.intro}</p>
+        <div class="callout">{guide.recommendation}</div>
+
+        <h2>A safe starting pattern</h2>
+        <pre><code>{guide.sample}</code></pre>
+
+        {guide.slug === "github-readme" && (
+          <>
+            <h2>Use a fenced code block</h2>
+            <p>Triple backticks preserve leading spaces and line breaks. Add the optional <code>text</code> language label so syntax highlighters do not color individual punctuation marks.</p>
+            <h2>Keep the real project name nearby</h2>
+            <p>ASCII art is visual text, but screen readers and search engines should not have to decode it. Keep a normal Markdown heading above or below the banner.</p>
+          </>
+        )}
+        {guide.slug === "code-comments" && (
+          <>
+            <h2>Choose the wrapper for the language</h2>
+            <p>Use a block comment for JavaScript, TypeScript, Go, Rust, Java, C, or C++. Use a hash-prefixed export for Shell, Python, Ruby, or YAML. The generator escapes accidental closing sequences.</p>
+            <h2>Let formatters pass over it</h2>
+            <p>Some formatters reflow long comments. Place decorative headers only where the formatter preserves verbatim blocks, or exclude that small region with the formatter’s documented directive.</p>
+          </>
+        )}
+        {guide.slug === "terminal-banner" && (
+          <>
+            <h2>Design for the narrow connection</h2>
+            <p>Eighty columns is still a useful baseline. Long hostnames and environment names often work better in a compact font than a large display style.</p>
+            <h2>Make the banner operationally useful</h2>
+            <p>Follow the art with plain text that identifies the environment, owner, or support route. Never rely on the banner alone for a production warning.</p>
+          </>
+        )}
+        {guide.slug === "cli-apps" && (
+          <>
+            <h2>Only print decoration interactively</h2>
+            <p>Check whether standard output is attached to a terminal. Commands used in pipes, tests, or JSON workflows should return structured output without a decorative preamble.</p>
+            <h2>Store the finished banner</h2>
+            <p>Once the product name is stable, copy the generated result into a constant or text asset. This keeps startup instant and avoids shipping hundreds of fonts with the CLI.</p>
+          </>
+        )}
+
+        <h2>Generate your version</h2>
+        <p><a href="/#gallery">Open the full gallery</a>, enter the final text, set the target width, then copy the output with the wrapper that matches this workflow.</p>
+      </article>
+      <aside class="article-aside" aria-label="Recommended fonts">
+        {indexedFonts.slice(0, 3).map((font) => (
+          <a class="info-card" href={`/fonts/${font.slug}/`}><span>Try this font</span><strong>{font.name} →</strong></a>
+        ))}
+      </aside>
+    </div>
+  </div>
+</BaseLayout>

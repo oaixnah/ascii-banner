@@ -1,0 +1,38 @@
+export const guidesZh = [
+  {
+    slug: "github-readme",
+    eyebrow: "Markdown 指南",
+    title: "在 GitHub README 中使用 ASCII Banner",
+    description: "创建清晰醒目的 ASCII 项目标题，在 Markdown 中完整保留间距，同时兼顾 README 的可访问性和可维护性。",
+    intro: "ASCII Banner 能让开源项目拥有容易识别的标题，同时不必向仓库加入二进制图片。关键是保持文字简短、字形清晰，并使用代码块保护排版。",
+    recommendation: "建议从 Standard、Slant、ANSI Shadow 或 Small 开始。这些字体在 GitHub 桌面布局和较窄的移动端页面中都比较容易辨认。",
+    sample: "```text\n    _    ____  ___\n   / \\  |  _ \\|_ _|\n  / _ \\ | |_) || |\n / ___ \\|  __/ | |\n/_/   \\_\\_|   |___|\n```",
+  },
+  {
+    slug: "code-comments",
+    eyebrow: "源代码指南",
+    title: "在代码注释中使用 ASCII Banner",
+    description: "把 ASCII 艺术字用作源代码分区标题，同时避免破坏语法、代码检查规则和行宽约定。",
+    intro: "ASCII Banner 最适合标记真正重要的代码边界，例如生成代码、独立子系统、协议阶段，或者开发者不应手动修改的文件。",
+    recommendation: "请选择紧凑字体，并让输出保持在项目规定的行宽以内。当格式化工具限制为 80 或 100 列时，Small 和 Ogre 是实用的起点。",
+    sample: "/*\n  ____ ___  ____  _____\n / ___/ _ \\|  _ \\| ____|\n| |  | | | | |_) |  _|\n| |__| |_| |  _ <| |___\n \\____\\___/|_| \\_\\_____|\n*/",
+  },
+  {
+    slug: "terminal-banner",
+    eyebrow: "终端指南",
+    title: "终端与 MOTD ASCII Banner",
+    description: "设计适合真实终端宽度的 ASCII 欢迎 Banner，让它在 SSH、Shell 和服务器控制台中保持清晰。",
+    intro: "终端 Banner 可以在用户运行命令之前标明主机、环境或安全边界。它应该迅速传达上下文，而不是占满整个屏幕。",
+    recommendation: "以 80 列为基准，不要只依赖颜色表达信息，并通过团队使用的最窄 SSH 客户端测试。Standard、Banner3 和 Small 都是可靠的起点。",
+    sample: "printf '%s\\n' '  ____  ____   ___  ____'\nprintf '%s\\n' ' |  _ \\|  _ \\ / _ \\|  _ \\'\nprintf '%s\\n' ' | |_) | |_) | | | | | | |'",
+  },
+  {
+    slug: "cli-apps",
+    eyebrow: "产品指南",
+    title: "为 CLI 应用设计 ASCII 启动画面",
+    description: "为命令行应用加入容易记住的文本 Logo，同时兼顾启动速度、可访问性和窄终端环境。",
+    intro: "CLI Banner 是产品界面的一部分。交互运行时可以展示它，但管道、测试和 JSON 工作流中的机器可读输出不应被装饰内容污染。",
+    recommendation: "产品名称稳定后，生成一次并把结果保存为常量或文本资源。除非用户确实需要动态文字，否则不要在每次启动时加载完整字体引擎。",
+    sample: "if (process.stdout.isTTY && !flags.quiet) {\n  console.log(BANNER);\n}\n\n// 在管道和自动化任务中跳过装饰输出。",
+  },
+] as const;

@@ -1,0 +1,100 @@
+---
+import figlet from "figlet";
+import BannerGallery from "../../components/BannerGallery";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { fontDescriptions } from "../../data/font-copy";
+import { fonts } from "../../lib/font-data";
+import type { FontManifestEntry } from "../../lib/types";
+
+export const getStaticPaths = () =>
+  fonts.map((font) => ({ params: { slug: font.slug }, props: { font } }));
+
+const { font } = Astro.props as { font: FontManifestEntry };
+const copy = fontDescriptions[font.slug] ?? {
+  summary: `${font.name} is a ${font.height}-row FIGlet style available in the complete ASCII Banner font library.`,
+  bestFor: "Short ASCII headings, experiments, and any fixed-width environment where its shape remains readable.",
+};
+let sample = "Preview available in the interactive generator below.";
+try {
+  sample = figlet.textSync("CODE", {
+    font: font.name as never,
+    width: 120,
+    horizontalLayout: "default",
+  });
+} catch {
+  // Keep a readable static fallback if a third-party font cannot render at build time.
+}
+const related = fonts.filter((candidate) => candidate.slug !== font.slug && candidate.category === font.category).slice(0, 4);
+const title = `${font.name} ASCII Art Font Generator`;
+const description = `Preview the ${font.name} FIGlet font, generate a custom ASCII banner, and copy it as raw text, Markdown, or a source-code comment.`;
+const schema = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebApplication",
+      name: `${font.name} ASCII font generator`,
+      url: `https://asciibanner.dev/fonts/${font.slug}/`,
+      applicationCategory: "DeveloperApplication",
+      operatingSystem: "Any",
+      description,
+      offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+    },
+    {
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        { "@type": "ListItem", position: 1, name: "ASCII Banner", item: "https://asciibanner.dev/" },
+        { "@type": "ListItem", position: 2, name: "Fonts", item: "https://asciibanner.dev/#popular-title" },
+        { "@type": "ListItem", position: 3, name: font.name, item: `https://asciibanner.dev/fonts/${font.slug}/` },
+      ],
+    },
+  ],
+};
+---
+
+<BaseLayout title={title} description={description} noindex={!font.indexed} hasTranslation={font.indexed} schema={schema}>
+  <div class="page-shell">
+    <header class="article-hero">
+      <nav class="breadcrumbs" aria-label="Breadcrumb"><a href="/">Home</a><span>/</span><a href="/#popular-title">Fonts</a><span>/</span><span>{font.name}</span></nav>
+      <span class="eyebrow">{font.category} FIGlet font</span>
+      <h1>{font.name} ASCII font.</h1>
+      <p>{copy.summary}</p>
+      <div class="static-ascii" aria-label={`${font.name} font example`}><pre>{sample}</pre></div>
+    </header>
+
+    <BannerGallery
+      fonts={[font]}
+      focusFontSlug={font.slug}
+      compact
+      locale="en"
+      languageSwitchPath={font.indexed ? `/zh/fonts/${font.slug}/` : "/zh/"}
+      client:load
+    />
+
+    <div class="content-grid">
+      <article class="prose">
+        <h2>About the {font.name} font</h2>
+        <p>{copy.summary} Its native FIGlet character cell is {font.height} rows high, making the finished banner easy to size before it reaches a terminal or source file.</p>
+        <p><strong>Best used for:</strong> {copy.bestFor}</p>
+
+        <h2>How to use this banner</h2>
+        <p>Type a short word or project name in the generator above. Start with an 80-column target if the result is going into a traditional terminal, then switch to a wider target for README files or large source comments.</p>
+        <p>Use <strong>Raw text</strong> for a terminal or text file, <strong>Markdown block</strong> for GitHub, and one of the comment exports when the banner will live directly in source code.</p>
+
+        <h2>Keep the alignment intact</h2>
+        <p>ASCII art depends on every character occupying the same width. Keep the output inside a code block or another monospace environment, and avoid editors that automatically trim leading spaces.</p>
+
+        <h2>Related {font.category} fonts</h2>
+        <div class="font-link-grid">
+          {related.map((candidate) => (
+            <a class="font-link" href={`/fonts/${candidate.slug}/`}><strong>{candidate.name}</strong><span>{candidate.height} rows</span></a>
+          ))}
+        </div>
+      </article>
+      <aside class="article-aside" aria-label="Font facts">
+        <div class="info-card"><span>Native height</span><strong>{font.height} rows</strong></div>
+        <div class="info-card"><span>Maximum glyph width</span><strong>{font.maxLength} columns</strong></div>
+        <div class="info-card"><span>Font attribution</span><strong>{font.attribution}</strong></div>
+      </aside>
+    </div>
+  </div>
+</BaseLayout>

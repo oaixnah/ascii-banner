@@ -1,0 +1,27 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { siteMessages, type SiteLocale } from "../i18n/ui";
+
+interface Props {
+  title: string;
+  description: string;
+  updated?: string;
+  locale?: SiteLocale;
+}
+const { title, description, updated, locale = "en" } = Astro.props;
+const copy = siteMessages[locale];
+const homePath = locale === "zh" ? "/zh/" : "/";
+---
+
+<BaseLayout title={title} description={description} locale={locale}>
+  <div class="page-shell legal-page">
+    <header class="article-hero">
+      <nav class="breadcrumbs" aria-label={copy.breadcrumb}><a href={homePath}>{locale === "zh" ? "首页" : "Home"}</a><span>/</span><span>{title}</span></nav>
+      <span class="eyebrow">ASCII Banner</span>
+      <h1>{title}</h1>
+      <p>{description}</p>
+      {updated && <p class="field-help">{copy.lastUpdated}：{updated}</p>}
+    </header>
+    <article class="prose"><slot /></article>
+  </div>
+</BaseLayout>

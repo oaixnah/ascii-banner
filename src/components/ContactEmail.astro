@@ -1,0 +1,8 @@
+---
+import { CONTACT_EMAIL } from "astro:env/server";
+import { parseContactEmail } from "../lib/contact-email";
+
+const contactEmail = parseContactEmail(CONTACT_EMAIL);
+---
+
+<a href={`mailto:${contactEmail}`}>{contactEmail}</a>

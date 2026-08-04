@@ -1,0 +1,71 @@
+name: Deploy static branch
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: deploy-static-branch
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: Build and publish
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      ASTRO_TELEMETRY_DISABLED: "1"
+      CI: "true"
+      DEPLOY_BRANCH: deploy
+      CONTACT_EMAIL: ${{ secrets.CONTACT_EMAIL }}
+      GA_MEASUREMENT_ID: ${{ secrets.GA_MEASUREMENT_ID }}
+      CLARITY_PROJECT_ID: ${{ secrets.CLARITY_PROJECT_ID }}
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && 'refs/heads/main' || github.sha }}
+          fetch-depth: 1
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa # v4
+        with:
+          run_install: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run unit tests
+        run: pnpm test
+
+      - name: Build static site
+        run: pnpm build
+
+      - name: Verify deploy output
+        run: pnpm verify:deploy
+
+      - name: Publish deploy snapshot
+        id: publish
+        run: bash scripts/publish-dist.sh dist
+
+      - name: Summarize deployment
+        run: |
+          {
+            echo "## Static branch published"
+            echo
+            echo "- Branch: \`deploy\`"
+            echo "- Source: \`$(git rev-parse HEAD)\`"
+            echo "- Includes validated robots and sitemap files"
+          } >> "$GITHUB_STEP_SUMMARY"
