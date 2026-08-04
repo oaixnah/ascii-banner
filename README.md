@@ -28,9 +28,9 @@ The end-to-end suite uses an installed Google Chrome channel and serves the stat
 
 ## Deployment
 
-Pushes to `main` run the GitHub Actions deployment workflow; it can also be started manually to republish the latest `main` commit. The workflow installs dependencies, runs unit tests, builds the site, verifies the complete output, and replaces the `deploy` branch with a single orphan snapshot containing the contents of `dist` at the branch root.
+Pushes to `main` run the GitHub Actions deployment workflow; it can also be started manually to republish the latest `main` commit. The workflow installs dependencies, runs unit tests, builds the site, verifies the complete output, and replaces the `gh-pages` branch with a single orphan snapshot containing the contents of `dist` at the branch root.
 
-Configure the static hosting provider to build from the root of `deploy`, and allow GitHub Actions to write that branch. The push uses `force-with-lease`, so an unexpected external branch update is preserved and causes the job to fail instead of being overwritten. To validate an existing local build without publishing it, run:
+Configure the static hosting provider to publish from the root of `gh-pages`, and allow GitHub Actions to write that branch. The push uses `force-with-lease`, so an unexpected external branch update is preserved and causes the job to fail instead of being overwritten. To validate an existing local build without publishing it, run:
 
 ```sh
 pnpm verify:deploy

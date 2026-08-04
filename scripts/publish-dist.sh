@@ -2,7 +2,7 @@
 set -euo pipefail
 
 deploy_dir="${1:-dist}"
-deploy_branch="${DEPLOY_BRANCH:-deploy}"
+deploy_branch="${DEPLOY_BRANCH:-gh-pages}"
 deploy_remote="${DEPLOY_REMOTE:-origin}"
 
 if [[ ! -d "$deploy_dir" ]]; then
