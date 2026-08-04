@@ -21,7 +21,7 @@ jobs:
     env:
       ASTRO_TELEMETRY_DISABLED: "1"
       CI: "true"
-      DEPLOY_BRANCH: deploy
+      DEPLOY_BRANCH: gh-pages
       CONTACT_EMAIL: ${{ secrets.CONTACT_EMAIL }}
       GA_MEASUREMENT_ID: ${{ secrets.GA_MEASUREMENT_ID }}
       CLARITY_PROJECT_ID: ${{ secrets.CLARITY_PROJECT_ID }}
@@ -65,7 +65,7 @@ jobs:
           {
             echo "## Static branch published"
             echo
-            echo "- Branch: \`deploy\`"
+            echo "- Branch: \`gh-pages\`"
             echo "- Source: \`$(git rev-parse HEAD)\`"
             echo "- Includes validated robots and sitemap files"
           } >> "$GITHUB_STEP_SUMMARY"

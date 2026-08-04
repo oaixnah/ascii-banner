@@ -50,7 +50,7 @@ const publish = async (
     cwd: source,
     env: {
       ...process.env,
-      DEPLOY_BRANCH: "deploy",
+      DEPLOY_BRANCH: "gh-pages",
       DEPLOY_REMOTE: remote,
       GITHUB_RUN_ID: runId,
       GITHUB_RUN_ATTEMPT: "1",
@@ -64,35 +64,35 @@ afterEach(async () => {
 });
 
 describe("publish-dist", () => {
-  it("creates a root-level, single-commit deploy snapshot", async () => {
+  it("creates a root-level, single-commit gh-pages snapshot", async () => {
     const { remote, source, dist } = await createRepository();
     await publish(source, dist, remote, "100");
 
-    expect(await git(remote, "rev-list", "--count", "deploy")).toBe("1");
-    expect((await git(remote, "ls-tree", "-r", "--name-only", "deploy")).split("\n")).toEqual([
+    expect(await git(remote, "rev-list", "--count", "gh-pages")).toBe("1");
+    expect((await git(remote, "ls-tree", "-r", "--name-only", "gh-pages")).split("\n")).toEqual([
       "index.html",
       "sitemap-index.xml",
     ]);
-    expect(await git(remote, "show", "deploy:index.html")).toBe("first build");
+    expect(await git(remote, "show", "gh-pages:index.html")).toBe("first build");
     await expect(readFile(path.join(source, "source.txt"), "utf8")).resolves.toBe("source only");
   });
 
   it("replaces the orphan snapshot and can republish the same source", async () => {
     const { remote, source, dist } = await createRepository();
     await publish(source, dist, remote, "100");
-    const firstCommit = await git(remote, "rev-parse", "deploy");
+    const firstCommit = await git(remote, "rev-parse", "gh-pages");
 
     await writeFile(path.join(dist, "index.html"), "second build");
     await publish(source, dist, remote, "101");
-    const secondCommit = await git(remote, "rev-parse", "deploy");
+    const secondCommit = await git(remote, "rev-parse", "gh-pages");
     expect(secondCommit).not.toBe(firstCommit);
-    expect(await git(remote, "rev-list", "--count", "deploy")).toBe("1");
-    expect(await git(remote, "show", "deploy:index.html")).toBe("second build");
+    expect(await git(remote, "rev-list", "--count", "gh-pages")).toBe("1");
+    expect(await git(remote, "show", "gh-pages:index.html")).toBe("second build");
 
     await publish(source, dist, remote, "102");
-    const thirdCommit = await git(remote, "rev-parse", "deploy");
+    const thirdCommit = await git(remote, "rev-parse", "gh-pages");
     expect(thirdCommit).not.toBe(secondCommit);
-    expect(await git(remote, "rev-list", "--count", "deploy")).toBe("1");
+    expect(await git(remote, "rev-list", "--count", "gh-pages")).toBe("1");
   });
 
   it("refuses to overwrite a remote update made after reading the lease", async () => {
@@ -110,7 +110,7 @@ describe("publish-dist", () => {
     await writeFile(shimPath, `#!/usr/bin/env bash
 set -euo pipefail
 if [[ "\${1:-}" == "push" ]]; then
-  "$REAL_GIT" push --force "$DEPLOY_REMOTE" "$CONFLICT_COMMIT:refs/heads/deploy" >/dev/null
+  "$REAL_GIT" push --force "$DEPLOY_REMOTE" "$CONFLICT_COMMIT:refs/heads/gh-pages" >/dev/null
 fi
 exec "$REAL_GIT" "$@"
 `);
@@ -123,7 +123,7 @@ exec "$REAL_GIT" "$@"
       CONFLICT_COMMIT: competingCommit,
     })).rejects.toThrow();
 
-    expect(await git(remote, "rev-parse", "deploy")).toBe(competingCommit);
-    expect(await git(remote, "show", "deploy:external.txt")).toBe("external update");
+    expect(await git(remote, "rev-parse", "gh-pages")).toBe(competingCommit);
+    expect(await git(remote, "show", "gh-pages:external.txt")).toBe("external update");
   });
 });
