@@ -14,16 +14,19 @@ export interface ColorSettings {
   end: string;
 }
 
-export interface FontManifestEntry {
+export interface GalleryFontEntry {
   name: string;
   slug: string;
   assetPath: string;
   category: FontCategory;
   height: number;
-  maxLength: number;
-  attribution: string;
   popularRank: number | null;
   indexed: boolean;
+}
+
+export interface FontManifestEntry extends GalleryFontEntry {
+  maxLength: number;
+  attribution: string;
 }
 
 export interface RenderParameters {
@@ -55,7 +58,7 @@ export interface ShareState {
 }
 
 export type WorkerRequest =
-  | { type: "init"; fonts: FontManifestEntry[]; baseUrl: string }
+  | { type: "init"; fonts: GalleryFontEntry[]; baseUrl: string }
   | { type: "cancel"; version: number }
   | RenderRequest
   | { type: "retry"; fontSlug: string; request: RenderParameters };

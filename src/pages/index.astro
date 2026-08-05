@@ -2,10 +2,10 @@
 import AdSlot from "../components/AdSlot.astro";
 import BannerGallery from "../components/BannerGallery";
 import BaseLayout from "../layouts/BaseLayout.astro";
-import { fonts, indexedFonts } from "../lib/font-data";
+import { fonts, galleryFontCatalog, indexedFonts } from "../lib/font-data";
 
 const title = "ASCII Banner Generator – Preview Every FIGlet Font";
-const description = `Type once and preview ${fonts.length} FIGlet fonts at the same time. Copy ASCII banners as raw text, Markdown, or code comments—free, private, and browser-based.`;
+const description = `Type once and browse ${fonts.length} FIGlet fonts in one live gallery. Copy ASCII banners as raw text, Markdown, or code comments—free, private, and browser-based.`;
 const site = Astro.site ?? Astro.url.origin;
 const faqs = [
   {
@@ -35,9 +35,11 @@ const schema = {
       applicationCategory: "DeveloperApplication",
       operatingSystem: "Any",
       browserRequirements: "Requires JavaScript and a modern browser",
+      isAccessibleForFree: true,
+      image: new URL("/og.png", site).href,
       description,
       offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
-      featureList: ["Preview every FIGlet font", "Markdown export", "Source-code comment export", "Local browser rendering"],
+      featureList: ["Browse every FIGlet font", "Markdown export", "Source-code comment export", "Local browser rendering"],
     },
     {
       "@type": "FAQPage",
@@ -55,10 +57,10 @@ const schema = {
   <div class="page-shell">
     <section class="hero">
       <span class="hero-badge">No dropdowns. No guesswork.</span>
-      <h1>Your text. <span>Every banner.</span></h1>
+      <h1>ASCII Banner Generator. <span>Every FIGlet font.</span></h1>
       <p>Scan the complete FIGlet library in one live gallery, then copy the exact format your README, terminal, or source file needs.</p>
       <div class="hero-proof" aria-label="Product highlights">
-        <span><i></i>{fonts.length} fonts at once</span>
+        <span><i></i>{fonts.length}-font catalog</span>
         <span><i></i>Runs in your browser</span>
         <span><i></i>Code-ready exports</span>
         <span><i></i>No sign-up</span>
@@ -66,7 +68,7 @@ const schema = {
     </section>
 
     <div id="gallery">
-      <BannerGallery fonts={fonts} locale="en" languageSwitchPath="/zh/" client:load />
+      <BannerGallery fontCatalog={galleryFontCatalog} locale="en" languageSwitchPath="/zh/" client:load />
     </div>
 
     <div class="section">

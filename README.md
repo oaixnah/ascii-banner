@@ -36,7 +36,7 @@ Configure the static hosting provider to publish from the root of `gh-pages`, an
 pnpm verify:deploy
 ```
 
-The deploy verifier requires the canonical robots and sitemap files, checks every indexed page and font asset, and rejects GitHub Pages-specific `CNAME` or `.nojekyll` files.
+The deploy verifier requires the canonical robots, sitemap, and EdgeOne configuration files, checks every indexed page and font asset, and rejects GitHub Pages-specific `CNAME` or `.nojekyll` files.
 
 Before the first workflow run, create these GitHub Actions repository secrets under **Settings → Secrets and variables → Actions**:
 
@@ -52,8 +52,12 @@ Repository secrets protect values while the workflow runs. The site URL, contact
 - `SITE_URL` is the single source for canonical links, structured data, `robots.txt`, and the single root-level `sitemap.xml`.
 - Advertising is disabled by default. Keep `PUBLIC_ADS_ENABLED=false` until preparing a properly consented ad integration.
 - Only the 20 editorially documented font pages enter the sitemap. Other generated font pages remain available with `noindex,follow`.
-- Configure the hosting platform to return `Strict-Transport-Security`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin`, a restrictive `Permissions-Policy`, and a tested Content Security Policy. The CSP must allow consented scripts and connections for Google Analytics and Microsoft Clarity. Start CSP in report-only mode because the current static output uses inline JSON-LD, consent code, and inline style values.
+- `public/edgeone.json` is copied to the deployment root. It permanently redirects indexable extensionless routes to their canonical trailing-slash URLs without intercepting `.flf` assets, adds HSTS and baseline security headers, stages a report-only CSP, and serves fonts as cacheable, compressible `text/plain` resources.
+- In the EdgeOne console, configure **Forced HTTPS** to use a permanent `301` redirect. Pages currently defaults to `302`, and protocol matching is not exposed by the repository-level redirects format.
+- After deployment, confirm `.flf` responses use Brotli or Gzip and review browser CSP reports before promoting `Content-Security-Policy-Report-Only` to an enforced policy. The policy must continue to allow consented scripts and connections for Google Analytics and Microsoft Clarity.
+- If moving to another host, reproduce the redirects, caching rules, HSTS, and response headers from `edgeone.json`.
 - Cache hashed files under `/_astro/` for one year with `immutable`; cache HTML and sitemap files with revalidation so a new deploy is visible immediately.
+- Verify the production origin in Google Search Console and Bing Webmaster Tools, submit `/sitemap.xml`, then request indexing for `/`, `/fonts/`, and `/zh/fonts/`. If a `site:` search is still empty after deployment, inspect those URLs in the webmaster consoles before changing page content again.
 
 ## Privacy
 

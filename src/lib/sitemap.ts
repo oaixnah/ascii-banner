@@ -6,11 +6,13 @@ const staticPaths = [
   "/",
   "/about/",
   "/contact/",
+  "/fonts/",
   "/privacy/",
   "/terms/",
   "/zh/",
   "/zh/about/",
   "/zh/contact/",
+  "/zh/fonts/",
   "/zh/privacy/",
   "/zh/terms/",
 ] as const;

@@ -1,0 +1,76 @@
+{
+  "redirects": [
+    { "source": "/about", "destination": "/about/", "statusCode": 301 },
+    { "source": "/contact", "destination": "/contact/", "statusCode": 301 },
+    { "source": "/fonts", "destination": "/fonts/", "statusCode": 301 },
+    { "source": "/fonts/standard", "destination": "/fonts/standard/", "statusCode": 301 },
+    { "source": "/fonts/ansi-shadow", "destination": "/fonts/ansi-shadow/", "statusCode": 301 },
+    { "source": "/fonts/slant", "destination": "/fonts/slant/", "statusCode": 301 },
+    { "source": "/fonts/big", "destination": "/fonts/big/", "statusCode": 301 },
+    { "source": "/fonts/doom", "destination": "/fonts/doom/", "statusCode": 301 },
+    { "source": "/fonts/banner3", "destination": "/fonts/banner3/", "statusCode": 301 },
+    { "source": "/fonts/block", "destination": "/fonts/block/", "statusCode": 301 },
+    { "source": "/fonts/colossal", "destination": "/fonts/colossal/", "statusCode": 301 },
+    { "source": "/fonts/ghost", "destination": "/fonts/ghost/", "statusCode": 301 },
+    { "source": "/fonts/graffiti", "destination": "/fonts/graffiti/", "statusCode": 301 },
+    { "source": "/fonts/3d-ascii", "destination": "/fonts/3d-ascii/", "statusCode": 301 },
+    { "source": "/fonts/bloody", "destination": "/fonts/bloody/", "statusCode": 301 },
+    { "source": "/fonts/isometric1", "destination": "/fonts/isometric1/", "statusCode": 301 },
+    { "source": "/fonts/small", "destination": "/fonts/small/", "statusCode": 301 },
+    { "source": "/fonts/shadow", "destination": "/fonts/shadow/", "statusCode": 301 },
+    { "source": "/fonts/star-wars", "destination": "/fonts/star-wars/", "statusCode": 301 },
+    { "source": "/fonts/sub-zero", "destination": "/fonts/sub-zero/", "statusCode": 301 },
+    { "source": "/fonts/speed", "destination": "/fonts/speed/", "statusCode": 301 },
+    { "source": "/fonts/epic", "destination": "/fonts/epic/", "statusCode": 301 },
+    { "source": "/fonts/ogre", "destination": "/fonts/ogre/", "statusCode": 301 },
+    { "source": "/for/:slug", "destination": "/for/:slug/", "statusCode": 301 },
+    { "source": "/privacy", "destination": "/privacy/", "statusCode": 301 },
+    { "source": "/terms", "destination": "/terms/", "statusCode": 301 },
+    { "source": "/zh", "destination": "/zh/", "statusCode": 301 },
+    { "source": "/zh/about", "destination": "/zh/about/", "statusCode": 301 },
+    { "source": "/zh/contact", "destination": "/zh/contact/", "statusCode": 301 },
+    { "source": "/zh/fonts", "destination": "/zh/fonts/", "statusCode": 301 },
+    { "source": "/zh/fonts/:slug", "destination": "/zh/fonts/:slug/", "statusCode": 301 },
+    { "source": "/zh/for/:slug", "destination": "/zh/for/:slug/", "statusCode": 301 },
+    { "source": "/zh/privacy", "destination": "/zh/privacy/", "statusCode": 301 },
+    { "source": "/zh/terms", "destination": "/zh/terms/", "statusCode": 301 }
+  ],
+  "headers": [
+    {
+      "source": "/*",
+      "headers": [
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "X-Frame-Options", "value": "DENY" },
+        { "key": "Referrer-Policy", "value": "strict-origin" },
+        { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=()" },
+        { "key": "Strict-Transport-Security", "value": "max-age=31536000; includeSubDomains" },
+        { "key": "Content-Security-Policy-Report-Only", "value": "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; img-src 'self' data: https://www.google-analytics.com https://*.google-analytics.com https://*.clarity.ms; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.clarity.ms https://*.clarity.ms; style-src 'self' 'unsafe-inline'; connect-src 'self' https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com https://www.clarity.ms https://*.clarity.ms wss://*.clarity.ms; worker-src 'self'; upgrade-insecure-requests" }
+      ]
+    },
+    {
+      "source": "/_astro/*",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
+      ]
+    },
+    {
+      "source": "/fonts/*.flf",
+      "headers": [
+        { "key": "Content-Type", "value": "text/plain; charset=utf-8" },
+        { "key": "Cache-Control", "value": "public, max-age=2592000" }
+      ]
+    },
+    {
+      "source": "/og.png",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=604800, stale-while-revalidate=86400" }
+      ]
+    },
+    {
+      "source": "/favicon.svg",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=2592000" }
+      ]
+    }
+  ]
+}

@@ -29,6 +29,13 @@ const copy = siteMessages[locale];
 const canonical = canonicalPath === null ? null : new URL(canonicalPath, Astro.site ?? Astro.url.origin);
 const socialImage = new URL("/og.png", Astro.site ?? Astro.url.origin);
 const fullTitle = title.includes("ASCII Banner") ? title : `${title} | ASCII Banner`;
+const websiteSchema = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  name: "ASCII Banner",
+  url: new URL("/", Astro.site ?? Astro.url.origin).href,
+  inLanguage: ["en", "zh-CN"],
+};
 const metadataPath = canonical?.pathname ?? Astro.url.pathname;
 const englishPath = locale === "zh" ? metadataPath.replace(/^\/zh(?=\/|$)/, "") || "/" : metadataPath;
 const chinesePath = locale === "zh" ? metadataPath : englishPath === "/" ? "/zh/" : `/zh${englishPath}`;
@@ -49,7 +56,13 @@ const pathFor = (path: string) => locale === "zh" ? `/zh${path}` : path;
     <meta name="referrer" content="strict-origin" />
     <meta name="generator" content={Astro.generator} />
     <meta name="description" content={description} />
-    {noindex && <meta name="robots" content="noindex,follow" />}
+    <meta
+      name="robots"
+      content={noindex
+        ? "noindex,follow"
+        : "index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1"}
+    />
+    <meta name="theme-color" content="#0b1511" />
     {canonical && <link rel="canonical" href={canonical} />}
     {hasTranslation && (
       <>
@@ -67,6 +80,8 @@ const pathFor = (path: string) => locale === "zh" ? `/zh${path}` : path;
     <meta property="og:locale" content={copy.ogLocale} />
     {hasTranslation && <meta property="og:locale:alternate" content={copy.alternateOgLocale} />}
     <meta property="og:image" content={socialImage} />
+    <meta property="og:image:secure_url" content={socialImage} />
+    <meta property="og:image:type" content="image/png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta property="og:image:alt" content={copy.socialImageAlt} />
@@ -74,6 +89,8 @@ const pathFor = (path: string) => locale === "zh" ? `/zh${path}` : path;
     <meta name="twitter:title" content={fullTitle} />
     <meta name="twitter:description" content={description} />
     <meta name="twitter:image" content={socialImage} />
+    <meta name="twitter:image:alt" content={copy.socialImageAlt} />
+    <script is:inline type="application/ld+json" set:html={JSON.stringify(websiteSchema)} />
     {schema && <script is:inline type="application/ld+json" set:html={JSON.stringify(schema)} />}
     <title>{fullTitle}</title>
   </head>
@@ -85,7 +102,7 @@ const pathFor = (path: string) => locale === "zh" ? `/zh${path}` : path;
           <span>ASCII Banner</span>
         </a>
         <nav class="site-nav" aria-label={copy.mainNavigation}>
-          <a href={`${homePath}#gallery`}>{copy.allFonts}</a>
+          <a href={pathFor("/fonts/")}>{copy.allFonts}</a>
           <a href={`${homePath}#guides`}>{copy.guides}</a>
           <a href={pathFor("/about/")}>{copy.about}</a>
           <span class="nav-actions">
@@ -116,7 +133,7 @@ const pathFor = (path: string) => locale === "zh" ? `/zh${path}` : path;
         </div>
         <div class="footer-column">
           <strong>{copy.generate}</strong>
-          <a href={`${homePath}#gallery`}>{copy.allFonts}</a>
+          <a href={pathFor("/fonts/")}>{copy.allFonts}</a>
           <a href={pathFor("/fonts/standard/")}>Standard</a>
           <a href={pathFor("/fonts/ansi-shadow/")}>ANSI Shadow</a>
           <a href={pathFor("/fonts/slant/")}>Slant</a>

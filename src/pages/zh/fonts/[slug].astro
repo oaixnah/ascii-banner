@@ -5,6 +5,7 @@ import BaseLayout from "../../../layouts/BaseLayout.astro";
 import { fontDescriptionsZh } from "../../../data/font-copy-zh";
 import { galleryMessages } from "../../../i18n/ui";
 import { indexedFonts } from "../../../lib/font-data";
+import { packGalleryFonts } from "../../../lib/gallery-fonts";
 import type { FontManifestEntry } from "../../../lib/types";
 
 export const getStaticPaths = () =>
@@ -40,6 +41,9 @@ const schema = {
       inLanguage: "zh-CN",
       applicationCategory: "DeveloperApplication",
       operatingSystem: "Any",
+      browserRequirements: "需要 JavaScript 和现代浏览器",
+      isAccessibleForFree: true,
+      image: new URL("/og.png", site).href,
       description,
       offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
     },
@@ -47,7 +51,7 @@ const schema = {
       "@type": "BreadcrumbList",
       itemListElement: [
         { "@type": "ListItem", position: 1, name: "ASCII Banner", item: new URL("/zh/", site).href },
-        { "@type": "ListItem", position: 2, name: "字体", item: new URL("/zh/#popular-title", site).href },
+        { "@type": "ListItem", position: 2, name: "字体", item: new URL("/zh/fonts/", site).href },
         { "@type": "ListItem", position: 3, name: font.name, item: new URL(`/zh/fonts/${font.slug}/`, site).href },
       ],
     },
@@ -58,7 +62,7 @@ const schema = {
 <BaseLayout title={title} description={description} locale="zh" schema={schema}>
   <div class="page-shell">
     <header class="article-hero">
-      <nav class="breadcrumbs" aria-label="面包屑导航"><a href="/zh/">首页</a><span>/</span><a href="/zh/#popular-title">字体</a><span>/</span><span>{font.name}</span></nav>
+      <nav class="breadcrumbs" aria-label="面包屑导航"><a href="/zh/">首页</a><span>/</span><a href="/zh/fonts/">字体</a><span>/</span><span>{font.name}</span></nav>
       <span class="eyebrow">{category} FIGlet 字体</span>
       <h1>{font.name} ASCII 字体。</h1>
       <p>{copy.summary}</p>
@@ -66,7 +70,7 @@ const schema = {
     </header>
 
     <BannerGallery
-      fonts={[font]}
+      fontCatalog={packGalleryFonts([font])}
       focusFontSlug={font.slug}
       compact
       locale="zh"

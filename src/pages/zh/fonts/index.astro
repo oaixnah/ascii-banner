@@ -1,0 +1,91 @@
+---
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import { fontDescriptionsZh } from "../../../data/font-copy-zh";
+import { indexedFonts } from "../../../lib/font-data";
+import type { FontCategory } from "../../../lib/types";
+
+const title = "FIGlet 字体库——ASCII 艺术字字体生成器";
+const description = `对比 ${indexedFonts.length} 种精选 FIGlet 字体，查看尺寸、静态示例和中文使用建议，并为 README、终端或源代码生成 ASCII 艺术字。`;
+const site = Astro.site ?? Astro.url.origin;
+const categoryCopy: Array<{ value: FontCategory; label: string; description: string }> = [
+  { value: "compact", label: "紧凑字体", description: "适合窄终端、代码注释、日志和内容密集的技术文档。" },
+  { value: "block", label: "块状字体", description: "对比强烈，适合项目名称、启动画面和醒目的文本标题。" },
+  { value: "3d", label: "3D 字体", description: "通过阴影或等距结构增加层次，同时保持为可复制的纯文本。" },
+  { value: "script", label: "手写字体", description: "更富表现力的字形，适合创意项目和轻松的展示场景。" },
+  { value: "novelty", label: "特色字体", description: "风格鲜明，适合主题工具、Demo、游戏和容易记住的 README。" },
+];
+const groups = categoryCopy
+  .map((category) => ({ ...category, fonts: indexedFonts.filter((font) => font.category === category.value) }))
+  .filter((category) => category.fonts.length > 0);
+const schema = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "CollectionPage",
+      name: "FIGlet 字体库",
+      url: new URL("/zh/fonts/", site).href,
+      description,
+      inLanguage: "zh-CN",
+    },
+    {
+      "@type": "ItemList",
+      name: "精选 FIGlet 字体",
+      numberOfItems: indexedFonts.length,
+      itemListElement: indexedFonts.map((font, index) => ({
+        "@type": "ListItem",
+        position: index + 1,
+        name: font.name,
+        url: new URL(`/zh/fonts/${font.slug}/`, site).href,
+      })),
+    },
+    {
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        { "@type": "ListItem", position: 1, name: "首页", item: new URL("/zh/", site).href },
+        { "@type": "ListItem", position: 2, name: "字体", item: new URL("/zh/fonts/", site).href },
+      ],
+    },
+  ],
+};
+---
+
+<BaseLayout title={title} description={description} canonicalPath="/zh/fonts/" locale="zh" schema={schema}>
+  <div class="page-shell">
+    <header class="article-hero">
+      <nav class="breadcrumbs" aria-label="面包屑导航"><a href="/zh/">首页</a><span>/</span><span>字体</span></nav>
+      <span class="eyebrow">精选 FIGlet 字体目录</span>
+      <h1>FIGlet 字体库。</h1>
+      <p>从 {indexedFonts.length} 种有完整说明的常用字体开始。每个页面都提供静态预览、尺寸建议、字体署名和单字体 ASCII 艺术字生成器。</p>
+    </header>
+
+    <section class="directory-intro" aria-labelledby="choose-font-title">
+      <div>
+        <span class="eyebrow">结合使用场景选择</span>
+        <h2 id="choose-font-title">让字体适应最终环境。</h2>
+      </div>
+      <p>紧凑字体更适合 80 列终端和代码注释；宽大的块状、3D 字体适合 README 或启动画面中的短名称。如果希望用自己的文字搜索全部字体，可以打开<a href="/zh/#gallery">完整实时字体库</a>。</p>
+    </section>
+
+    {groups.map((group) => (
+      <section class="font-directory-section" aria-labelledby={`font-category-${group.value}`}>
+        <div class="font-directory-heading">
+          <h2 id={`font-category-${group.value}`}>{group.label}</h2>
+          <p>{group.description}</p>
+        </div>
+        <div class="font-directory-grid">
+          {group.fonts.map((font) => {
+            const copy = fontDescriptionsZh[font.slug];
+            return (
+              <a class="font-directory-card" href={`/zh/fonts/${font.slug}/`}>
+                <span>{font.height} 行 · {group.label}</span>
+                <h3>{font.name}</h3>
+                <p>{copy?.summary ?? `一款适合等宽文本 Banner 的 ${font.height} 行 FIGlet 字体。`}</p>
+                <strong>打开字体生成器 →</strong>
+              </a>
+            );
+          })}
+        </div>
+      </section>
+    ))}
+  </div>
+</BaseLayout>

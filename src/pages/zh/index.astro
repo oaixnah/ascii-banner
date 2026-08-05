@@ -3,10 +3,10 @@ import AdSlot from "../../components/AdSlot.astro";
 import BannerGallery from "../../components/BannerGallery";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import { galleryMessages } from "../../i18n/ui";
-import { fonts, indexedFonts } from "../../lib/font-data";
+import { fonts, galleryFontCatalog, indexedFonts } from "../../lib/font-data";
 
 const title = "ASCII 艺术字生成器——一次预览全部 FIGlet 字体";
-const description = `输入一次文字，同时预览 ${fonts.length} 种 FIGlet 字体，并将 ASCII Banner 复制为纯文本、Markdown 或代码注释。免费、隐私友好、完全在浏览器本地运行。`;
+const description = `输入一次文字，在实时字体库中浏览 ${fonts.length} 种 FIGlet 字体，并将 ASCII Banner 复制为纯文本、Markdown 或代码注释。免费、隐私友好、完全在浏览器本地运行。`;
 const site = Astro.site ?? Astro.url.origin;
 const faqs = [
   {
@@ -37,9 +37,11 @@ const schema = {
       applicationCategory: "DeveloperApplication",
       operatingSystem: "Any",
       browserRequirements: "需要 JavaScript 和现代浏览器",
+      isAccessibleForFree: true,
+      image: new URL("/og.png", site).href,
       description,
       offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
-      featureList: ["一次预览全部 FIGlet 字体", "导出 Markdown", "导出源代码注释", "浏览器本地生成"],
+      featureList: ["浏览全部 FIGlet 字体", "导出 Markdown", "导出源代码注释", "浏览器本地生成"],
     },
     {
       "@type": "FAQPage",
@@ -59,10 +61,10 @@ const categories = galleryMessages.zh.categories;
   <div class="page-shell">
     <section class="hero">
       <span class="hero-badge">无需逐个选择，一次看全</span>
-      <h1>输入一次，<span>预览全部艺术字。</span></h1>
+      <h1>ASCII 艺术字生成器，<span>预览全部 FIGlet 字体。</span></h1>
       <p>在一个实时列表中浏览完整 FIGlet 字体库，再把结果直接复制到 README、终端或源代码中。</p>
       <div class="hero-proof" aria-label="产品特点">
-        <span><i></i>同时预览 {fonts.length} 种字体</span>
+        <span><i></i>{fonts.length} 种字体完整目录</span>
         <span><i></i>浏览器本地生成</span>
         <span><i></i>适合代码工作流</span>
         <span><i></i>无需注册</span>
@@ -70,7 +72,7 @@ const categories = galleryMessages.zh.categories;
     </section>
 
     <div id="gallery">
-      <BannerGallery fonts={fonts} locale="zh" languageSwitchPath="/" client:load />
+      <BannerGallery fontCatalog={galleryFontCatalog} locale="zh" languageSwitchPath="/" client:load />
     </div>
 
     <div class="section">

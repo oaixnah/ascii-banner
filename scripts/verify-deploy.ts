@@ -2,8 +2,9 @@ import { readFile, stat } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
-const REQUIRED_FILES = ["index.html", "404.html", "robots.txt", "sitemap.xml"] as const;
+const REQUIRED_FILES = ["index.html", "404.html", "edgeone.json", "favicon.svg", "og.png", "robots.txt", "sitemap.xml"] as const;
 const HOST_SPECIFIC_FILES = ["CNAME", ".nojekyll"] as const;
+const MAX_SOCIAL_IMAGE_BYTES = 500_000;
 
 export interface VerifyDeployOptions {
   siteUrl: string;
@@ -29,6 +30,12 @@ const readText = async (filePath: string) => {
 const extractLocations = (xml: string) => (
   [...xml.matchAll(/<loc>\s*([^<]+?)\s*<\/loc>/g)].map((match) => match[1])
 );
+
+const alternatePaths = (pathname: string) => {
+  const english = pathname.startsWith("/zh/") ? pathname.slice(3) || "/" : pathname;
+  const chinese = pathname.startsWith("/zh/") ? pathname : english === "/" ? "/zh/" : `/zh${english}`;
+  return { english, chinese };
+};
 
 const resolveOutputPath = (distDir: string, relativePath: string) => {
   const root = path.resolve(distDir);
@@ -81,8 +88,12 @@ export const verifyDeployOutput = async (
 
   const sitemap = await readText(path.join(distDir, "sitemap.xml"));
   const pageLocations = sitemap ? extractLocations(sitemap) : [];
+  const pageLocationSet = new Set(pageLocations);
   if (sitemap && pageLocations.length === 0) {
     issues.push("sitemap.xml must contain at least one page URL");
+  }
+  if (new Set(pageLocations).size !== pageLocations.length) {
+    issues.push("sitemap.xml must not contain duplicate page URLs");
   }
 
   for (const pageLocation of pageLocations) {
@@ -104,7 +115,79 @@ export const verifyDeployOutput = async (
     const outputPath = resolveOutputPath(distDir, routeOutputPath(pageUrl.pathname));
     if (!outputPath || !(await isFile(outputPath))) {
       issues.push(`Missing page referenced by sitemap: ${pageUrl.pathname}`);
+      continue;
     }
+
+    const html = await readText(outputPath);
+    if (!html) {
+      issues.push(`Unable to read page referenced by sitemap: ${pageUrl.pathname}`);
+      continue;
+    }
+    const canonical = html.match(/<link\s+rel=["']canonical["']\s+href=["']([^"']+)["']/i)?.[1];
+    if (canonical !== pageUrl.href) {
+      issues.push(`Canonical URL mismatch for ${pageUrl.pathname}: expected ${pageUrl.href}`);
+    }
+    if (/<meta\s+name=["']robots["']\s+content=["'][^"']*noindex/i.test(html)) {
+      issues.push(`Sitemap page must be indexable: ${pageUrl.pathname}`);
+    }
+    if (!/<title>[^<]+<\/title>/i.test(html)) {
+      issues.push(`Missing page title: ${pageUrl.pathname}`);
+    }
+    if (!/<meta\s+name=["']description["']\s+content=["'][^"']+["']/i.test(html)) {
+      issues.push(`Missing meta description: ${pageUrl.pathname}`);
+    }
+    if (!/<script\s+type=["']application\/ld\+json["']/i.test(html)) {
+      issues.push(`Missing structured data: ${pageUrl.pathname}`);
+    }
+    const headingCount = html.match(/<h1(?:\s|>)/gi)?.length ?? 0;
+    if (headingCount !== 1) {
+      issues.push(`Sitemap page must contain exactly one h1: ${pageUrl.pathname}`);
+    }
+
+    const internalPaths = new Set(
+      [...html.matchAll(/<a\s+[^>]*href=["']([^"']+)["']/gi)]
+        .map((match) => match[1])
+        .flatMap((href) => {
+          try {
+            const target = new URL(href.replaceAll("&amp;", "&"), pageUrl);
+            return target.origin === canonicalOrigin ? [target.pathname] : [];
+          } catch {
+            return [];
+          }
+        }),
+    );
+    for (const internalPath of internalPaths) {
+      const linkOutputPath = resolveOutputPath(distDir, routeOutputPath(internalPath));
+      if (!linkOutputPath || !(await isFile(linkOutputPath))) {
+        issues.push(`Broken internal link from ${pageUrl.pathname}: ${internalPath}`);
+      }
+    }
+
+    const { english, chinese } = alternatePaths(pageUrl.pathname);
+    const englishUrl = new URL(english, site).href;
+    const chineseUrl = new URL(chinese, site).href;
+    if (pageLocationSet.has(englishUrl) && pageLocationSet.has(chineseUrl)) {
+      const alternates = new Map(
+        [...html.matchAll(/<link\s+rel=["']alternate["']\s+hreflang=["']([^"']+)["']\s+href=["']([^"']+)["']/gi)]
+          .map((match) => [match[1], match[2]]),
+      );
+      if (
+        alternates.get("en") !== englishUrl
+        || alternates.get("zh-CN") !== chineseUrl
+        || alternates.get("x-default") !== englishUrl
+      ) {
+        issues.push(`Invalid hreflang cluster for ${pageUrl.pathname}`);
+      }
+    }
+  }
+
+  try {
+    const socialImage = await stat(path.join(distDir, "og.png"));
+    if (socialImage.size > MAX_SOCIAL_IMAGE_BYTES) {
+      issues.push(`og.png exceeds ${MAX_SOCIAL_IMAGE_BYTES} bytes`);
+    }
+  } catch {
+    // The required-file check reports a missing image.
   }
 
   for (const assetPath of options.expectedFontAssets ?? []) {

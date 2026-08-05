@@ -6,6 +6,7 @@ import { verifyDeployOutput } from "../scripts/verify-deploy";
 
 const temporaryDirectories: string[] = [];
 const siteUrl = "https://example.test";
+const pageHtml = (pathname: string, title: string) => `<!doctype html><html><head><meta name="description" content="Description"><meta name="robots" content="index,follow"><link rel="canonical" href="${siteUrl}${pathname}"><script type="application/ld+json">{}</script><title>${title}</title></head><body><h1>${title}</h1></body></html>`;
 
 const createFixture = async () => {
   const root = await mkdtemp(path.join(os.tmpdir(), "ascii-banner-deploy-"));
@@ -13,9 +14,12 @@ const createFixture = async () => {
   await mkdir(path.join(root, "about"), { recursive: true });
   await mkdir(path.join(root, "fonts"), { recursive: true });
   await Promise.all([
-    writeFile(path.join(root, "index.html"), "home"),
+    writeFile(path.join(root, "index.html"), pageHtml("/", "Home")),
     writeFile(path.join(root, "404.html"), "not found"),
-    writeFile(path.join(root, "about", "index.html"), "about"),
+    writeFile(path.join(root, "edgeone.json"), "{}"),
+    writeFile(path.join(root, "favicon.svg"), "<svg></svg>"),
+    writeFile(path.join(root, "og.png"), "image"),
+    writeFile(path.join(root, "about", "index.html"), pageHtml("/about/", "About")),
     writeFile(path.join(root, "fonts", "Standard.flf"), "font"),
     writeFile(path.join(root, "robots.txt"), `User-agent: *\nAllow: /\n\nSitemap: ${siteUrl}/sitemap.xml\n`),
     writeFile(
@@ -39,7 +43,7 @@ describe("deploy output verification", () => {
     })).resolves.toEqual({ sitemapCount: 1, fontCount: 1 });
   });
 
-  it.each(["index.html", "404.html", "robots.txt", "sitemap.xml"])(
+  it.each(["index.html", "404.html", "edgeone.json", "favicon.svg", "og.png", "robots.txt", "sitemap.xml"])(
     "rejects a missing required file: %s",
     async (file) => {
       const root = await createFixture();
@@ -85,6 +89,39 @@ describe("deploy output verification", () => {
     );
     await expect(verifyDeployOutput(root, { siteUrl })).rejects.toThrow(
       `Page URL must use ${siteUrl}`,
+    );
+  });
+
+  it("rejects sitemap pages with invalid index metadata", async () => {
+    const root = await createFixture();
+    await writeFile(
+      path.join(root, "about", "index.html"),
+      '<html><head><meta name="robots" content="noindex,follow"><title>About</title></head><body><h1>One</h1><h1>Two</h1></body></html>',
+    );
+    await expect(verifyDeployOutput(root, { siteUrl })).rejects.toThrow(
+      /Canonical URL mismatch[\s\S]*Sitemap page must be indexable[\s\S]*Missing meta description[\s\S]*exactly one h1/,
+    );
+  });
+
+  it("rejects incomplete bilingual hreflang clusters", async () => {
+    const root = await createFixture();
+    await mkdir(path.join(root, "zh"));
+    await writeFile(path.join(root, "zh", "index.html"), pageHtml("/zh/", "首页"));
+    await writeFile(
+      path.join(root, "sitemap.xml"),
+      `<urlset><url><loc>${siteUrl}/</loc></url><url><loc>${siteUrl}/zh/</loc></url></urlset>`,
+    );
+    await expect(verifyDeployOutput(root, { siteUrl })).rejects.toThrow("Invalid hreflang cluster");
+  });
+
+  it("rejects broken internal links on indexable pages", async () => {
+    const root = await createFixture();
+    await writeFile(
+      path.join(root, "about", "index.html"),
+      pageHtml("/about/", "About").replace("</body>", '<a href="/missing/">Missing</a></body>'),
+    );
+    await expect(verifyDeployOutput(root, { siteUrl })).rejects.toThrow(
+      "Broken internal link from /about/: /missing/",
     );
   });
 });

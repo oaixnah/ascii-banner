@@ -55,7 +55,7 @@ export const siteMessages: Record<SiteLocale, SiteMessages> = {
     openGenerator: "Open generator",
     languageSwitch: "中文",
     languageSwitchLabel: "切换到中文",
-    footerSummary: "Preview every FIGlet font at once, then copy production-ready banners for READMEs, terminals, and source code.",
+    footerSummary: "Browse the complete FIGlet catalog, then copy production-ready banners for READMEs, terminals, and source code.",
     generate: "Generate",
     useCases: "Use cases",
     company: "Company",
@@ -93,7 +93,7 @@ export const siteMessages: Record<SiteLocale, SiteMessages> = {
     openGenerator: "打开生成器",
     languageSwitch: "EN",
     languageSwitchLabel: "Switch to English",
-    footerSummary: "一次预览全部 FIGlet 字体，再将适合 README、终端和源代码的 ASCII Banner 直接复制使用。",
+    footerSummary: "浏览完整 FIGlet 字体目录，再将适合 README、终端和源代码的 ASCII Banner 直接复制使用。",
     generate: "生成",
     useCases: "使用场景",
     company: "网站信息",
@@ -160,6 +160,8 @@ interface GalleryMessages {
   featuredFirst: string;
   alphabetical: string;
   fontCount: (count: number, filtered: boolean) => string;
+  fontsVisible: (shown: number, total: number) => string;
+  showMoreFonts: (count: number) => string;
   rendering: (done: number, total: number) => string;
   allUpdated: string;
   browseReady: string;
@@ -233,6 +235,8 @@ export const galleryMessages: Record<SiteLocale, GalleryMessages> = {
     featuredFirst: "Featured first",
     alphabetical: "A–Z",
     fontCount: (count, filtered) => `${count} ${count === 1 ? "font" : "fonts"}${filtered ? " shown" : " ready to browse"}`,
+    fontsVisible: (shown, total) => `Showing ${shown} of ${total}`,
+    showMoreFonts: (count) => `Show ${count} more fonts`,
     rendering: (done, total) => `Rendering ${done}/${total}`,
     allUpdated: "All previews updated",
     browseReady: "Nearby previews updated · more render as you browse",
@@ -339,6 +343,8 @@ export const galleryMessages: Record<SiteLocale, GalleryMessages> = {
     featuredFirst: "推荐优先",
     alphabetical: "名称 A–Z",
     fontCount: (count, filtered) => `${count} 种字体${filtered ? "符合条件" : "可供浏览"}`,
+    fontsVisible: (shown, total) => `已显示 ${shown} / ${total}`,
+    showMoreFonts: (count) => `再显示 ${count} 种字体`,
     rendering: (done, total) => `正在生成 ${done}/${total}`,
     allUpdated: "全部预览已更新",
     browseReady: "附近预览已更新 · 继续浏览时按需生成",
