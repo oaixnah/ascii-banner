@@ -1,0 +1,91 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { fontDescriptions } from "../../data/font-copy";
+import { indexedFonts } from "../../lib/font-data";
+import type { FontCategory } from "../../lib/types";
+
+const title = "FIGlet Font Gallery – ASCII Art Font Generators";
+const description = `Compare ${indexedFonts.length} curated FIGlet fonts with sizing notes, static examples, and focused ASCII art generators for READMEs, terminals, and source code.`;
+const site = Astro.site ?? Astro.url.origin;
+const categoryCopy: Array<{ value: FontCategory; label: string; description: string }> = [
+  { value: "compact", label: "Compact fonts", description: "Shorter styles for narrow terminals, comments, logs, and dense documentation." },
+  { value: "block", label: "Block fonts", description: "High-contrast display faces for project names, launch screens, and prominent headings." },
+  { value: "3d", label: "3D fonts", description: "Layered and isometric shapes that add depth while remaining copyable plain text." },
+  { value: "script", label: "Script fonts", description: "More expressive letterforms for creative projects and informal banners." },
+  { value: "novelty", label: "Novelty fonts", description: "Distinctive FIGlet styles for themed tools, demos, games, and memorable READMEs." },
+];
+const groups = categoryCopy
+  .map((category) => ({ ...category, fonts: indexedFonts.filter((font) => font.category === category.value) }))
+  .filter((category) => category.fonts.length > 0);
+const schema = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "CollectionPage",
+      name: "FIGlet font gallery",
+      url: new URL("/fonts/", site).href,
+      description,
+      inLanguage: "en",
+    },
+    {
+      "@type": "ItemList",
+      name: "Curated FIGlet fonts",
+      numberOfItems: indexedFonts.length,
+      itemListElement: indexedFonts.map((font, index) => ({
+        "@type": "ListItem",
+        position: index + 1,
+        name: font.name,
+        url: new URL(`/fonts/${font.slug}/`, site).href,
+      })),
+    },
+    {
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        { "@type": "ListItem", position: 1, name: "Home", item: new URL("/", site).href },
+        { "@type": "ListItem", position: 2, name: "Fonts", item: new URL("/fonts/", site).href },
+      ],
+    },
+  ],
+};
+---
+
+<BaseLayout title={title} description={description} canonicalPath="/fonts/" schema={schema}>
+  <div class="page-shell">
+    <header class="article-hero">
+      <nav class="breadcrumbs" aria-label="Breadcrumb"><a href="/">Home</a><span>/</span><span>Fonts</span></nav>
+      <span class="eyebrow">Curated FIGlet directory</span>
+      <h1>FIGlet font gallery.</h1>
+      <p>Start with {indexedFonts.length} useful, documented styles. Each page includes a static preview, practical sizing guidance, attribution, and a focused ASCII banner generator.</p>
+    </header>
+
+    <section class="directory-intro" aria-labelledby="choose-font-title">
+      <div>
+        <span class="eyebrow">Choose with context</span>
+        <h2 id="choose-font-title">Match the font to its destination.</h2>
+      </div>
+      <p>Compact fonts suit 80-column terminals and code comments. Wider block and 3D styles work best for short names in README files or launch screens. Use the <a href="/#gallery">complete live gallery</a> when you want to search all available fonts with your own text.</p>
+    </section>
+
+    {groups.map((group) => (
+      <section class="font-directory-section" aria-labelledby={`font-category-${group.value}`}>
+        <div class="font-directory-heading">
+          <h2 id={`font-category-${group.value}`}>{group.label}</h2>
+          <p>{group.description}</p>
+        </div>
+        <div class="font-directory-grid">
+          {group.fonts.map((font) => {
+            const copy = fontDescriptions[font.slug];
+            return (
+              <a class="font-directory-card" href={`/fonts/${font.slug}/`}>
+                <span>{font.height} rows · {font.category}</span>
+                <h3>{font.name}</h3>
+                <p>{copy?.summary ?? `A ${font.height}-row FIGlet font for fixed-width text banners.`}</p>
+                <strong>Open font generator →</strong>
+              </a>
+            );
+          })}
+        </div>
+      </section>
+    ))}
+  </div>
+</BaseLayout>

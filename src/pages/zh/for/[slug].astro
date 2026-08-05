@@ -8,12 +8,26 @@ const { guide } = Astro.props;
 const site = Astro.site ?? Astro.url.origin;
 const schema = {
   "@context": "https://schema.org",
-  "@type": "TechArticle",
-  inLanguage: "zh-CN",
-  headline: guide.title,
-  description: guide.description,
-  mainEntityOfPage: new URL(`/zh/for/${guide.slug}/`, site).href,
-  author: { "@type": "Organization", name: "ASCII Banner" },
+  "@graph": [
+    {
+      "@type": "TechArticle",
+      inLanguage: "zh-CN",
+      headline: guide.title,
+      description: guide.description,
+      image: new URL("/og.png", site).href,
+      mainEntityOfPage: new URL(`/zh/for/${guide.slug}/`, site).href,
+      author: { "@type": "Organization", name: "ASCII Banner", url: new URL("/zh/", site).href },
+      publisher: { "@type": "Organization", name: "ASCII Banner", url: new URL("/zh/", site).href },
+    },
+    {
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        { "@type": "ListItem", position: 1, name: "首页", item: new URL("/zh/", site).href },
+        { "@type": "ListItem", position: 2, name: "使用指南", item: new URL("/zh/#guides", site).href },
+        { "@type": "ListItem", position: 3, name: guide.title, item: new URL(`/zh/for/${guide.slug}/`, site).href },
+      ],
+    },
+  ],
 };
 ---
 

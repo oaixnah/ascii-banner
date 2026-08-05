@@ -10,7 +10,9 @@ describe("sitemap generation", () => {
     expect(locations).toHaveLength(sitemapPaths.length);
     expect(locations.every((location) => location.startsWith("https://example.test/"))).toBe(true);
     expect(locations).toContain("https://example.test/");
+    expect(locations).toContain("https://example.test/fonts/");
     expect(locations).toContain("https://example.test/zh/");
+    expect(locations).toContain("https://example.test/zh/fonts/");
   });
 
   it("includes both languages only for editorially indexed fonts", () => {

@@ -8,11 +8,26 @@ const { guide } = Astro.props;
 const site = Astro.site ?? Astro.url.origin;
 const schema = {
   "@context": "https://schema.org",
-  "@type": "TechArticle",
-  headline: guide.title,
-  description: guide.description,
-  mainEntityOfPage: new URL(`/for/${guide.slug}/`, site).href,
-  author: { "@type": "Organization", name: "ASCII Banner" },
+  "@graph": [
+    {
+      "@type": "TechArticle",
+      headline: guide.title,
+      description: guide.description,
+      inLanguage: "en",
+      image: new URL("/og.png", site).href,
+      mainEntityOfPage: new URL(`/for/${guide.slug}/`, site).href,
+      author: { "@type": "Organization", name: "ASCII Banner", url: new URL("/", site).href },
+      publisher: { "@type": "Organization", name: "ASCII Banner", url: new URL("/", site).href },
+    },
+    {
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        { "@type": "ListItem", position: 1, name: "Home", item: new URL("/", site).href },
+        { "@type": "ListItem", position: 2, name: "Guides", item: new URL("/#guides", site).href },
+        { "@type": "ListItem", position: 3, name: guide.title, item: new URL(`/for/${guide.slug}/`, site).href },
+      ],
+    },
+  ],
 };
 ---
 

@@ -3,7 +3,7 @@
 import figlet from "figlet";
 import { measureOutput } from "../lib/export";
 import type {
-  FontManifestEntry,
+  GalleryFontEntry,
   RenderParameters,
   RenderPriority,
   RenderRequest,
@@ -21,8 +21,8 @@ interface RenderJob extends RenderParameters {
   pending: RenderResult[];
 }
 
-let fonts: FontManifestEntry[] = [];
-let fontsBySlug = new Map<string, FontManifestEntry>();
+let fonts: GalleryFontEntry[] = [];
+let fontsBySlug = new Map<string, GalleryFontEntry>();
 let baseUrl = "";
 let latestVersion = 0;
 let activeJob: RenderJob | null = null;
@@ -33,7 +33,7 @@ const loadPromises = new Map<string, Promise<void>>();
 const post = (message: WorkerResponse) => self.postMessage(message);
 const yieldToMessageQueue = () => new Promise<void>((resolve) => setTimeout(resolve, 0));
 
-const loadFont = (font: FontManifestEntry) => {
+const loadFont = (font: GalleryFontEntry) => {
   if (loaded.has(font.slug)) return Promise.resolve();
   const existing = loadPromises.get(font.slug);
   if (existing) return existing;
@@ -53,7 +53,7 @@ const loadFont = (font: FontManifestEntry) => {
   return promise;
 };
 
-const renderOne = async (font: FontManifestEntry, request: RenderParameters): Promise<RenderResult> => {
+const renderOne = async (font: GalleryFontEntry, request: RenderParameters): Promise<RenderResult> => {
   try {
     await loadFont(font);
     const output = figlet.textSync(request.text, {

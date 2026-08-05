@@ -11,9 +11,31 @@ interface Props {
 const { title, description, updated, locale = "en" } = Astro.props;
 const copy = siteMessages[locale];
 const homePath = locale === "zh" ? "/zh/" : "/";
+const site = Astro.site ?? Astro.url.origin;
+const pageUrl = new URL(Astro.url.pathname, site).href;
+const schema = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebPage",
+      name: title,
+      url: pageUrl,
+      description,
+      inLanguage: copy.htmlLang,
+      isPartOf: { "@type": "WebSite", name: "ASCII Banner", url: new URL("/", site).href },
+    },
+    {
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        { "@type": "ListItem", position: 1, name: locale === "zh" ? "首页" : "Home", item: new URL(homePath, site).href },
+        { "@type": "ListItem", position: 2, name: title, item: pageUrl },
+      ],
+    },
+  ],
+};
 ---
 
-<BaseLayout title={title} description={description} locale={locale}>
+<BaseLayout title={title} description={description} locale={locale} schema={schema}>
   <div class="page-shell legal-page">
     <header class="article-hero">
       <nav class="breadcrumbs" aria-label={copy.breadcrumb}><a href={homePath}>{locale === "zh" ? "首页" : "Home"}</a><span>/</span><span>{title}</span></nav>

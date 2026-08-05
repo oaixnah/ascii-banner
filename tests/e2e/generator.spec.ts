@@ -11,6 +11,7 @@ import { TOUR_STORAGE_KEY, serializeTourState } from "../../src/lib/tour";
 const fontCount = JSON.parse(
   readFileSync(new URL("../../src/data/font-manifest.generated.json", import.meta.url), "utf8"),
 ).length as number;
+const initialCardCount = 20;
 
 test.describe("ASCII Banner generator", () => {
   test.beforeEach(async ({ page }, testInfo) => {
@@ -27,12 +28,7 @@ test.describe("ASCII Banner generator", () => {
 
   test("gates analytics behind consent and excludes shared banner text", async ({ page }, testInfo) => {
     test.skip(testInfo.project.name !== "chromium", "Analytics consent is covered once on desktop");
-    await page.addInitScript(({ key, state }) => {
-      window.localStorage.setItem(key, state);
-    }, {
-      key: ANALYTICS_CONSENT_STORAGE_KEY,
-      state: serializeAnalyticsConsent("denied", Date.now() - ANALYTICS_CONSENT_MAX_AGE_MS),
-    });
+    const expiredConsent = serializeAnalyticsConsent("denied", Date.now() - ANALYTICS_CONSENT_MAX_AGE_MS);
     await page.route("https://www.googletagmanager.com/**", (route) => route.fulfill({
       contentType: "application/javascript",
       body: "window.__googleAnalyticsLoaded = true;",
@@ -43,6 +39,10 @@ test.describe("ASCII Banner generator", () => {
     }));
 
     await page.goto("/");
+    await page.evaluate(({ key, state }) => {
+      window.localStorage.setItem(key, state);
+    }, { key: ANALYTICS_CONSENT_STORAGE_KEY, state: expiredConsent });
+    await page.reload();
     const consent = page.getByRole("dialog", { name: "Help improve ASCII Banner?" });
     await expect(consent).toBeVisible();
     await expect.poll(() => page.evaluate(
@@ -148,12 +148,14 @@ test.describe("ASCII Banner generator", () => {
     await expect.poll(() => page.evaluate((key) => window.localStorage.getItem(key), TOUR_STORAGE_KEY)).toContain('"status":"dismissed"');
   });
 
-  test("renders the full library and updates it from one input", async ({ page }, testInfo) => {
-    test.skip(testInfo.project.name !== "chromium", "Full idle backfill runs only on capable desktop devices");
+  test("renders a bounded first page and updates visible fonts from one input", async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== "chromium", "Progressive catalog rendering is covered once on desktop");
     await page.goto("/");
-    await expect(page.getByRole("heading", { name: /Your text\. Every banner/i })).toBeVisible();
-    await expect(page.locator(".font-card")).toHaveCount(fontCount);
-    await expect(page.locator(".render-state")).toContainText("All previews updated", { timeout: 30_000 });
+    await expect(page.getByRole("heading", { name: /ASCII Banner Generator/i })).toBeVisible();
+    await expect(page.locator(".font-card")).toHaveCount(initialCardCount);
+    await expect(page.locator(".render-state")).toContainText("more render as you browse", { timeout: 30_000 });
+    await page.getByRole("button", { name: "Show 40 more fonts" }).click();
+    await expect(page.locator(".font-card")).toHaveCount(initialCardCount + 40);
 
     const input = page.getByLabel("Your text");
     await input.fill("OUTDATED VERSION");
@@ -163,7 +165,7 @@ test.describe("ASCII Banner generator", () => {
     const finalText = "LATEST RESULT 1234567890 ABCDEFGHIJKLMNO";
     await input.fill(finalText);
     await expect(input).toHaveValue(finalText);
-    await expect(page.locator(".render-state")).toContainText("All previews updated", { timeout: 30_000 });
+    await expect(page.locator('[data-font="standard"]')).toHaveAttribute("data-render-state", "ready", { timeout: 30_000 });
     const standardPreview = page.locator('[data-font="standard"] pre');
     await expect(standardPreview).not.toContainText("Hello");
     const finalOutput = await standardPreview.textContent();
@@ -174,7 +176,7 @@ test.describe("ASCII Banner generator", () => {
   test("renders nearby previews on demand instead of backfilling the library on mobile", async ({ page }, testInfo) => {
     test.skip(testInfo.project.name !== "mobile", "Mobile scheduling is covered once");
     await page.goto("/");
-    await expect(page.locator(".font-card")).toHaveCount(fontCount);
+    await expect(page.locator(".font-card")).toHaveCount(initialCardCount);
     await expect(page.locator('[data-font="standard"]')).toHaveAttribute("data-render-state", "ready", { timeout: 20_000 });
     await expect(page.locator(".render-state")).toContainText("more render as you browse", { timeout: 20_000 });
     expect(await page.locator('[data-render-state="ready"]').count()).toBeLessThan(fontCount);
@@ -186,30 +188,14 @@ test.describe("ASCII Banner generator", () => {
     await expect(searchMatch.locator("pre")).toBeVisible();
   });
 
-  test("renders the nearby set first and promotes search matches before idle backfill", async ({ page }, testInfo) => {
-    test.skip(testInfo.project.name !== "chromium", "Hybrid scheduling is covered once on desktop");
-    await page.addInitScript(() => {
-      let nextHandle = 0;
-      const callbacks = new Map<number, IdleRequestCallback>();
-      Object.defineProperty(window, "requestIdleCallback", {
-        configurable: true,
-        value: (callback: IdleRequestCallback) => {
-          nextHandle += 1;
-          callbacks.set(nextHandle, callback);
-          return nextHandle;
-        },
-      });
-      Object.defineProperty(window, "cancelIdleCallback", {
-        configurable: true,
-        value: (handle: number) => callbacks.delete(handle),
-      });
-    });
+  test("renders the nearby set first and promotes search matches on demand", async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== "chromium", "On-demand scheduling is covered once on desktop");
     await page.goto("/");
 
     await expect(page.locator('[data-font="standard"]')).toHaveAttribute("data-render-state", "ready", { timeout: 20_000 });
     await expect.poll(() => page.locator('[data-render-state="ready"]').count()).toBeGreaterThanOrEqual(20);
     expect(await page.locator('[data-render-state="ready"]').count()).toBeLessThan(fontCount);
-    await expect(page.locator(".render-state")).toContainText("Rendering");
+    await expect(page.locator(".render-state")).toContainText("more render as you browse", { timeout: 20_000 });
 
     await page.getByLabel("Find a font").fill("Univers");
     const searchMatch = page.locator('[data-font="univers"]');
@@ -283,7 +269,7 @@ test.describe("ASCII Banner generator", () => {
     await input.press("Enter");
     await input.fill("INTERMEDIATE");
     await input.fill("FINAL ENTRY");
-    await page.getByRole("heading", { name: /Your text\. Every banner/i }).click();
+    await page.getByRole("heading", { name: /ASCII Banner Generator/i }).click();
 
     const historyButton = page.getByRole("button", { name: "Open text history" });
     await expect(historyButton).toHaveCSS("border-radius", "0px");
@@ -315,7 +301,7 @@ test.describe("ASCII Banner generator", () => {
     await page.getByRole("button", { name: "Clear all history" }).click();
     await expect(page.getByRole("dialog", { name: "Recent text" })).toContainText("No saved text yet");
     await expect(input).toHaveValue("FINAL ENTRY");
-    await page.getByRole("heading", { name: /Your text\. Every banner/i }).click();
+    await page.getByRole("heading", { name: /ASCII Banner Generator/i }).click();
     await expect(page.getByRole("dialog", { name: "Recent text" })).toHaveCount(0);
 
     await input.fill("CLEAR ME");
@@ -445,7 +431,7 @@ test.describe("ASCII Banner generator", () => {
     await page.goto("/");
     const card = page.locator('[data-font="standard"]');
     const preview = card.locator("pre");
-    await expect(page.locator(".render-state")).toContainText("All previews updated", { timeout: 30_000 });
+    await expect(page.locator(".render-state")).toContainText("Nearby previews updated", { timeout: 30_000 });
     const originalOutput = await preview.textContent();
 
     await page.getByRole("button", { name: "Use Rainbow color theme" }).click();
@@ -455,7 +441,7 @@ test.describe("ASCII Banner generator", () => {
       elements.slice(0, 10).every((element) => element.getAttribute("data-color-preset") === "rainbow")
     ))).toBe(true);
     await expect(preview).toHaveText(originalOutput ?? "");
-    await expect(page.locator(".render-state")).toContainText("All previews updated");
+    await expect(page.locator(".render-state")).toContainText("Nearby previews updated");
     await expect(page.getByRole("link", { name: "切换到中文" })).toHaveAttribute("href", "/zh/");
     await page.evaluate(() => {
       window.open = (url) => {
@@ -584,7 +570,7 @@ test.describe("ASCII Banner generator", () => {
     test.skip(testInfo.project.name !== "chromium", "Localized route check runs once on desktop");
     await page.goto("/zh/?text=Ship%20It&width=100&layout=fitted");
     await expect(page.locator("html")).toHaveAttribute("lang", "zh-CN");
-    await expect(page.getByRole("heading", { name: "输入一次，预览全部艺术字。" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "ASCII 艺术字生成器，预览全部 FIGlet 字体。" })).toBeVisible();
     const canonical = await page.locator('link[rel="canonical"]').getAttribute("href");
     expect(canonical).not.toBeNull();
     const siteOrigin = new URL(canonical!).origin;

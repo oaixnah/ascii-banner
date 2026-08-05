@@ -291,6 +291,9 @@ button:focus-visible, input:focus-visible, select:focus-visible, summary:focus-v
 .empty-state h3 { margin: 12px 0 4px; color: var(--text); }
 .empty-state p { margin: 0 0 16px; font-size: 0.82rem; }
 .empty-state button { padding: 8px 12px; border: 1px solid var(--border); border-radius: 0; background: var(--surface); color: var(--text); }
+.gallery-pagination { display: flex; align-items: center; justify-content: center; gap: 14px; padding: 22px 0 2px; color: var(--text-muted); font: 500 0.68rem/1.4 var(--font-mono); }
+.gallery-pagination button { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 38px; padding: 0 13px; border: 1px solid var(--border-strong); border-radius: 0; background: var(--surface); color: var(--text); font: 700 0.7rem/1 var(--font-sans); }
+.gallery-pagination button:hover { border-color: var(--accent); color: var(--accent-strong); }
 .style-rail { position: sticky; top: var(--tool-sticky-offset); min-width: 0; padding: 8px 0 8px 14px; border-left: 1px solid var(--border); opacity: 0; visibility: hidden; pointer-events: none; transform: translateY(6px); transition: opacity 140ms ease, transform 140ms ease, visibility 0s linear 140ms; }
 .style-rail.is-visible { opacity: 1; visibility: visible; pointer-events: auto; transform: translateY(0); transition-delay: 0s; }
 .style-rail-heading { display: block; margin: 0 8px 9px; color: var(--text-muted); font-size: 0.62rem; font-weight: 800; letter-spacing: 0.09em; text-transform: uppercase; }
@@ -365,6 +368,21 @@ button:focus-visible, input:focus-visible, select:focus-visible, summary:focus-v
 .guide-card span { color: var(--accent); font: 600 0.65rem/1 var(--font-mono); text-transform: uppercase; }
 .guide-card h3 { margin: 14px 0 7px; font-size: 0.94rem; }
 .guide-card p { margin: 0; color: var(--text-soft); font-size: 0.76rem; }
+.directory-intro { display: grid; grid-template-columns: minmax(0, 1fr) minmax(320px, 0.9fr); gap: 48px; align-items: end; max-width: 1120px; margin: 0 auto 76px; padding: 28px; border: 1px solid var(--border); background: var(--surface-subtle); }
+.directory-intro h2 { margin: 8px 0 0; font-size: clamp(1.8rem, 3vw, 2.7rem); line-height: 1.08; letter-spacing: -0.04em; }
+.directory-intro p { margin: 0; color: var(--text-soft); font-size: 0.9rem; }
+.directory-intro a { color: var(--accent-strong); text-decoration: underline; text-underline-offset: 3px; }
+.font-directory-section { max-width: 1120px; margin: 0 auto; padding: 42px 0 18px; }
+.font-directory-heading { display: grid; grid-template-columns: minmax(220px, 0.65fr) minmax(320px, 1fr); gap: 40px; align-items: end; margin-bottom: 20px; }
+.font-directory-heading h2 { margin: 0; font-size: 1.7rem; letter-spacing: -0.035em; }
+.font-directory-heading p { margin: 0; color: var(--text-soft); font-size: 0.84rem; }
+.font-directory-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.font-directory-card { display: flex; flex-direction: column; min-height: 220px; padding: 21px; border: 1px solid var(--border); background: var(--surface); transition: transform 160ms ease, border-color 160ms ease; }
+.font-directory-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+.font-directory-card > span { color: var(--accent); font: 600 0.64rem/1 var(--font-mono); text-transform: capitalize; }
+.font-directory-card h3 { margin: 17px 0 8px; font-size: 1.05rem; }
+.font-directory-card p { margin: 0; color: var(--text-soft); font-size: 0.78rem; }
+.font-directory-card strong { margin-top: auto; padding-top: 20px; color: var(--accent-strong); font-size: 0.72rem; }
 .faq-list { display: grid; gap: 9px; max-width: 900px; }
 .faq-list details { border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--surface); }
 .faq-list summary { padding: 17px 19px; cursor: pointer; font-weight: 700; font-size: 0.88rem; }
@@ -443,6 +461,8 @@ button:focus-visible, input:focus-visible, select:focus-visible, summary:focus-v
   .section-heading { grid-template-columns: 1fr; gap: 15px; }
   .workflow-grid { grid-template-columns: 1fr 1fr; }
   .font-link-grid, .guide-grid { grid-template-columns: repeat(2, 1fr); }
+  .directory-intro, .font-directory-heading { grid-template-columns: 1fr; gap: 15px; }
+  .font-directory-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .content-grid { grid-template-columns: 1fr; }
   .article-aside { position: static; grid-template-columns: repeat(3, 1fr); }
   .footer-inner { grid-template-columns: 1.5fr repeat(2, 1fr); }
@@ -460,6 +480,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, summary:focus-v
   .styled-select--sort .styled-select-menu { width: 100%; }
   .gallery-status { align-items: flex-start; }
   .gallery-status > span:first-child { display: none; }
+  .gallery-pagination { flex-direction: column; gap: 8px; }
   .font-card-header { align-items: flex-start; }
   .font-identity { align-items: flex-start; }
   .card-actions { gap: 3px; }
@@ -469,6 +490,8 @@ button:focus-visible, input:focus-visible, select:focus-visible, summary:focus-v
   .ascii-preview pre { font-size: 0.64rem; }
   .section { padding-top: 70px; }
   .workflow-grid, .stats-grid, .font-link-grid, .guide-grid { grid-template-columns: 1fr; }
+  .font-directory-grid { grid-template-columns: 1fr; }
+  .font-directory-card { min-height: 0; }
   .article-aside { grid-template-columns: 1fr; }
   .footer-inner { grid-template-columns: 1fr 1fr; }
   .footer-brand { grid-column: 1 / -1; }

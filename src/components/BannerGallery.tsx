@@ -35,11 +35,11 @@ import { galleryMessages, type SiteLocale } from "../i18n/ui";
 import { buildColorGradient, COLOR_KINDS, COLOR_PRESETS, DEFAULT_COLOR_SETTINGS, sanitizeColorSettings } from "../lib/color";
 import { formatExport } from "../lib/export";
 import { fontDetailPath } from "../lib/font-links";
+import { unpackGalleryFonts } from "../lib/gallery-fonts";
 import {
   BACKGROUND_RENDER_CHUNK,
   INITIAL_RENDER_COUNT,
   orderFontsForBackground,
-  takeUnscheduledSlugs,
 } from "../lib/render-scheduler";
 import { buildShareQuery, DEFAULT_SHARE_STATE, parseShareState } from "../lib/share";
 import {
@@ -54,7 +54,7 @@ import type {
   ColorSettings,
   ExportFormat,
   FontCategory,
-  FontManifestEntry,
+  GalleryFontEntry,
   HorizontalLayout,
   RenderParameters,
   RenderPriority,
@@ -63,65 +63,16 @@ import type {
   WorkerResponse,
 } from "../lib/types";
 
-interface IdleDeadlineLike {
-  didTimeout: boolean;
-  timeRemaining: () => number;
-}
-
-type IdleWindow = Window & {
-  requestIdleCallback?: (
-    callback: (deadline: IdleDeadlineLike) => void,
-    options?: { timeout: number },
-  ) => number;
-  cancelIdleCallback?: (handle: number) => void;
-};
-
-type NetworkInformationLike = {
-  effectiveType?: string;
-  saveData?: boolean;
-};
-
-type NavigatorWithConnection = Navigator & {
-  connection?: NetworkInformationLike;
-};
-
-const shouldBackfillInBackground = () => {
-  if (window.matchMedia("(max-width: 899px)").matches) return false;
-  const connection = (navigator as NavigatorWithConnection).connection;
-  if (connection?.saveData) return false;
-  return connection?.effectiveType !== "slow-2g" && connection?.effectiveType !== "2g";
-};
-
-interface IdleHandle {
-  kind: "idle" | "timeout";
-  id: number;
-}
-
-const requestBrowserIdle = (callback: (deadline: IdleDeadlineLike) => void): IdleHandle => {
-  const idleWindow = window as IdleWindow;
-  if (idleWindow.requestIdleCallback) {
-    return { kind: "idle", id: idleWindow.requestIdleCallback(callback, { timeout: 900 }) };
-  }
-  return {
-    kind: "timeout",
-    id: window.setTimeout(() => callback({ didTimeout: true, timeRemaining: () => 0 }), 240),
-  };
-};
-
-const cancelBrowserIdle = (handle: IdleHandle | null) => {
-  if (!handle) return;
-  const idleWindow = window as IdleWindow;
-  if (handle.kind === "idle") idleWindow.cancelIdleCallback?.(handle.id);
-  else window.clearTimeout(handle.id);
-};
-
 interface Props {
-  fonts: FontManifestEntry[];
+  fontCatalog: string;
   focusFontSlug?: string;
   compact?: boolean;
   locale?: SiteLocale;
   languageSwitchPath?: string;
 }
+
+const INITIAL_CARD_COUNT = 20;
+const CARD_PAGE_SIZE = 40;
 
 const copyText = async (value: string) => {
   if (navigator.clipboard?.writeText) return navigator.clipboard.writeText(value);
@@ -237,13 +188,14 @@ function StyledSelect<T extends string>({
   );
 }
 
-export default function BannerGallery({ fonts, focusFontSlug, compact = false, locale = "en", languageSwitchPath }: Props) {
+export default function BannerGallery({ fontCatalog, focusFontSlug, compact = false, locale = "en", languageSwitchPath }: Props) {
   const copy = galleryMessages[locale];
   const categoryLabels = copy.categories;
   const exportOptions = copy.exportOptions;
+  const unpackedFonts = useMemo<GalleryFontEntry[]>(() => unpackGalleryFonts(fontCatalog), [fontCatalog]);
   const scopedFonts = useMemo(
-    () => (focusFontSlug ? fonts.filter((font) => font.slug === focusFontSlug) : fonts),
-    [fonts, focusFontSlug],
+    () => (focusFontSlug ? unpackedFonts.filter((font) => font.slug === focusFontSlug) : unpackedFonts),
+    [focusFontSlug, unpackedFonts],
   );
   const [text, setText] = useState(DEFAULT_SHARE_STATE.text);
   const [width, setWidth] = useState(DEFAULT_SHARE_STATE.width);
@@ -264,6 +216,7 @@ export default function BannerGallery({ fonts, focusFontSlug, compact = false, l
   const [tourReplayToken, setTourReplayToken] = useState(0);
   const [textHistory, setTextHistory] = useState<string[]>([]);
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [visibleLimit, setVisibleLimit] = useState(focusFontSlug ? Number.MAX_SAFE_INTEGER : INITIAL_CARD_COUNT);
   const [activeCardSlugs, setActiveCardSlugs] = useState<Set<string>>(() => new Set(
     orderFontsForBackground(scopedFonts)
       .slice(0, focusFontSlug ? scopedFonts.length : INITIAL_RENDER_COUNT)
@@ -284,7 +237,6 @@ export default function BannerGallery({ fonts, focusFontSlug, compact = false, l
   const scheduledSlugsRef = useRef(new Set<string>());
   const renderedSlugsRef = useRef(new Set<string>());
   const backgroundOrderRef = useRef<string[]>([]);
-  const idleHandleRef = useRef<IdleHandle | null>(null);
   const backgroundBackfillEnabledRef = useRef(false);
   const textRef = useRef(DEFAULT_SHARE_STATE.text);
   const textDirtyRef = useRef(false);
@@ -299,11 +251,6 @@ export default function BannerGallery({ fonts, focusFontSlug, compact = false, l
     { id: "browse", target: '[data-tour="browse"]', fallback: '[data-tour="gallery"]', ...copy.tour.steps.browse },
     { id: "copy", target: '[data-tour="copy"]', fallback: '[data-tour="gallery"]', ...copy.tour.steps.copy },
   ], [copy.tour.steps]);
-
-  const cancelIdleBackfill = useCallback(() => {
-    cancelBrowserIdle(idleHandleRef.current);
-    idleHandleRef.current = null;
-  }, []);
 
   const dispatchFonts = useCallback((fontSlugs: string[], priority: RenderPriority) => {
     const worker = workerRef.current;
@@ -324,30 +271,6 @@ export default function BannerGallery({ fonts, focusFontSlug, compact = false, l
     };
     worker.postMessage(message);
   }, []);
-
-  const scheduleIdleBackfill = useCallback(() => {
-    cancelIdleBackfill();
-    if (!backgroundBackfillEnabledRef.current) return;
-    const scheduleNextChunk = () => {
-      if (!activeRenderRef.current) return;
-      idleHandleRef.current = requestBrowserIdle((deadline) => {
-        idleHandleRef.current = null;
-        if (!activeRenderRef.current) return;
-        const chunkSize = deadline.didTimeout || deadline.timeRemaining() < 5
-          ? Math.max(8, Math.floor(BACKGROUND_RENDER_CHUNK / 2))
-          : BACKGROUND_RENDER_CHUNK;
-        const nextSlugs = takeUnscheduledSlugs(
-          backgroundOrderRef.current,
-          scheduledSlugsRef.current,
-          chunkSize,
-        );
-        if (!nextSlugs.length) return;
-        dispatchFonts(nextSlugs, "background");
-        if (scheduledSlugsRef.current.size < backgroundOrderRef.current.length) scheduleNextChunk();
-      });
-    };
-    scheduleNextChunk();
-  }, [cancelIdleBackfill, dispatchFonts]);
 
   const persistTextHistory = useCallback((items: string[]) => {
     textHistoryRef.current = items;
@@ -440,7 +363,6 @@ export default function BannerGallery({ fonts, focusFontSlug, compact = false, l
     activeRenderRef.current = null;
     scheduledSlugsRef.current.clear();
     renderedSlugsRef.current.clear();
-    cancelIdleBackfill();
     const worker = new Worker(new URL("../workers/render.worker.ts", import.meta.url), { type: "module" });
     workerRef.current = worker;
     worker.onmessage = (event: MessageEvent<WorkerResponse>) => {
@@ -466,12 +388,11 @@ export default function BannerGallery({ fonts, focusFontSlug, compact = false, l
     };
     worker.postMessage(init);
     return () => {
-      cancelIdleBackfill();
       activeRenderRef.current = null;
       workerRef.current = null;
       worker.terminate();
     };
-  }, [cancelIdleBackfill, scopedFonts]);
+  }, [scopedFonts]);
 
   useEffect(() => {
     const scheduledCount = scheduledSlugsRef.current.size;
@@ -498,7 +419,7 @@ export default function BannerGallery({ fonts, focusFontSlug, compact = false, l
       };
       activeRenderRef.current = request;
       scheduledSlugsRef.current.clear();
-      backgroundBackfillEnabledRef.current = shouldBackfillInBackground();
+      backgroundBackfillEnabledRef.current = false;
       backgroundOrderRef.current = orderFontsForBackground(scopedFonts).map((font) => font.slug);
       const initialSlugs = focusFontSlug
         ? backgroundOrderRef.current
@@ -514,10 +435,9 @@ export default function BannerGallery({ fonts, focusFontSlug, compact = false, l
           .filter((slug): slug is string => Boolean(slug));
         dispatchFonts(nearbySlugs, "high");
       });
-      scheduleIdleBackfill();
     }, 120);
     return () => window.clearTimeout(timeout);
-  }, [dispatchFonts, effectiveText, focusFontSlug, layout, scheduleIdleBackfill, scopedFonts, width, workerReady]);
+  }, [dispatchFonts, effectiveText, focusFontSlug, layout, scopedFonts, width, workerReady]);
 
   useEffect(() => {
     const gallery = galleryRef.current;
@@ -640,6 +560,16 @@ export default function BannerGallery({ fonts, focusFontSlug, compact = false, l
     });
   }, [category, favorites, favoritesOnly, query, scopedFonts, sort]);
 
+  const renderedFonts = useMemo(
+    () => visibleFonts.slice(0, visibleLimit),
+    [visibleFonts, visibleLimit],
+  );
+  const remainingFontCount = visibleFonts.length - renderedFonts.length;
+
+  useEffect(() => {
+    setVisibleLimit(focusFontSlug ? Number.MAX_SAFE_INTEGER : INITIAL_CARD_COUNT);
+  }, [category, favoritesOnly, focusFontSlug, query, sort]);
+
   useEffect(() => {
     const fontList = fontListRef.current;
     if (!fontList || typeof IntersectionObserver === "undefined") return;
@@ -666,12 +596,12 @@ export default function BannerGallery({ fonts, focusFontSlug, compact = false, l
     const cards = [...fontList.querySelectorAll<HTMLElement>(".font-card")];
     for (const card of cards) observer.observe(card);
     if (query.trim()) {
-      const searchSlugs = visibleFonts.slice(0, BACKGROUND_RENDER_CHUNK).map((font) => font.slug);
+      const searchSlugs = renderedFonts.slice(0, BACKGROUND_RENDER_CHUNK).map((font) => font.slug);
       setActiveCardSlugs((current) => new Set([...current, ...searchSlugs]));
       dispatchFonts(searchSlugs, "high");
     }
     return () => observer.disconnect();
-  }, [dispatchFonts, query, visibleFonts]);
+  }, [dispatchFonts, query, renderedFonts]);
 
   const categoryCounts = useMemo(() => {
     const counts: Record<FontCategory | "all", number> = {
@@ -697,7 +627,6 @@ export default function BannerGallery({ fonts, focusFontSlug, compact = false, l
     activeRenderRef.current = null;
     scheduledSlugsRef.current.clear();
     renderedSlugsRef.current.clear();
-    cancelIdleBackfill();
     const cancel: WorkerRequest = { type: "cancel", version };
     workerRef.current?.postMessage(cancel);
     setResults((current) => (current.size ? new Map() : current));
@@ -1157,7 +1086,7 @@ export default function BannerGallery({ fonts, focusFontSlug, compact = false, l
         </div>
 
         <div className="font-list" ref={fontListRef}>
-          {visibleFonts.map((font, fontIndex) => {
+          {renderedFonts.map((font, fontIndex) => {
             const result = results.get(font.slug);
             const isFavorite = favorites.has(font.slug);
             const isWide = Boolean(result && result.columns > width);
@@ -1285,6 +1214,19 @@ export default function BannerGallery({ fonts, focusFontSlug, compact = false, l
             );
           })}
         </div>
+
+        {remainingFontCount > 0 && (
+          <div className="gallery-pagination">
+            <span>{copy.fontsVisible(renderedFonts.length, visibleFonts.length)}</span>
+            <button
+              type="button"
+              onClick={() => setVisibleLimit((current) => current + CARD_PAGE_SIZE)}
+            >
+              {copy.showMoreFonts(Math.min(CARD_PAGE_SIZE, remainingFontCount))}
+              <ChevronDown size={16} aria-hidden="true" />
+            </button>
+          </div>
+        )}
 
         {!visibleFonts.length && (
           <div className="empty-state">

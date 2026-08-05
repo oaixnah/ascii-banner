@@ -1,9 +1,9 @@
-import type { FontManifestEntry } from "./types";
+import type { GalleryFontEntry } from "./types";
 
 export const INITIAL_RENDER_COUNT = 20;
 export const BACKGROUND_RENDER_CHUNK = 24;
 
-export const orderFontsForBackground = (fonts: FontManifestEntry[]) => (
+export const orderFontsForBackground = (fonts: GalleryFontEntry[]) => (
   [...fonts].sort((a, b) => {
     if (a.popularRank && b.popularRank) return a.popularRank - b.popularRank;
     if (a.popularRank) return -1;
