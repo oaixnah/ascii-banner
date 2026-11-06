@@ -1,7 +1,5 @@
 export const ANALYTICS_CONSENT_STORAGE_KEY = "ascii-banner:analytics-consent";
-export const ANALYTICS_PROMPT_SESSION_KEY = "ascii-banner:analytics-prompt-collapsed";
-export const ANALYTICS_CONSENT_VERSION = 2;
-export const ANALYTICS_CONSENT_MAX_AGE_MS = 15 * 24 * 60 * 60 * 1000;
+export const ANALYTICS_CONSENT_VERSION = 3;
 
 export type AnalyticsConsentStatus = "granted" | "denied";
 
@@ -38,23 +36,15 @@ export const parseAnalyticsConfig = (
 
 export const parseAnalyticsConsent = (
   raw: string | null,
-  now = Date.now(),
-): AnalyticsConsentStatus | null => {
-  if (!raw) return null;
+): AnalyticsConsentStatus => {
+  if (!raw) return "granted";
   try {
     const value = JSON.parse(raw) as Partial<AnalyticsConsentState>;
-    const age = now - (value.decidedAt ?? Number.NaN);
-    if (
-      value.version === ANALYTICS_CONSENT_VERSION
-      && (value.status === "granted" || value.status === "denied")
-      && Number.isFinite(age)
-      && age >= 0
-      && age < ANALYTICS_CONSENT_MAX_AGE_MS
-    ) return value.status;
+    if (value.status === "denied") return "denied";
   } catch {
-    // Invalid or stale values are treated as no decision.
+    // Invalid values fall back to the default-on setting.
   }
-  return null;
+  return "granted";
 };
 
 export const serializeAnalyticsConsent = (

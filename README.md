@@ -12,7 +12,7 @@ cp .env.example .env
 pnpm dev
 ```
 
-Set `SITE_URL`, `CONTACT_EMAIL`, `GA_MEASUREMENT_ID`, and `CLARITY_PROJECT_ID` in `.env`. `SITE_URL` must be the public HTTPS origin without a path, such as `https://asciibanner.dev`. The build fails when any required value is missing or malformed. Analytics scripts are consent-gated and their identifiers are intentionally public in the generated HTML.
+Set `SITE_URL`, `CONTACT_EMAIL`, `GA_MEASUREMENT_ID`, and `CLARITY_PROJECT_ID` in `.env`. `SITE_URL` must be the public HTTPS origin without a path, such as `https://asciibanner.dev`. The build fails when any required value is missing or malformed. Analytics scripts load by default and can be turned off from the footer; their identifiers are intentionally public in the generated HTML.
 
 The font sync runs before development and production builds. It copies distributable `.flf` assets from the pinned `figlet` package, builds the typed manifest, verifies printable English output, rejects embedded header notices that conflict with redistribution, and removes fonts that fail the v1 ASCII compatibility check.
 
@@ -54,11 +54,11 @@ Repository secrets protect values while the workflow runs. The site URL, contact
 - Only the 20 editorially documented font pages enter the sitemap. Other generated font pages remain available with `noindex,follow`.
 - `public/edgeone.json` is copied to the deployment root. It permanently redirects indexable extensionless routes to their canonical trailing-slash URLs without intercepting `.flf` assets, adds HSTS and baseline security headers, stages a report-only CSP, and serves fonts as cacheable, compressible `text/plain` resources.
 - In the EdgeOne console, configure **Forced HTTPS** to use a permanent `301` redirect. Pages currently defaults to `302`, and protocol matching is not exposed by the repository-level redirects format.
-- After deployment, confirm `.flf` responses use Brotli or Gzip and review browser CSP reports before promoting `Content-Security-Policy-Report-Only` to an enforced policy. The policy must continue to allow consented scripts and connections for Google Analytics and Microsoft Clarity.
+- After deployment, confirm `.flf` responses use Brotli or Gzip and review browser CSP reports before promoting `Content-Security-Policy-Report-Only` to an enforced policy. The policy must continue to allow analytics scripts and connections for Google Analytics and Microsoft Clarity.
 - If moving to another host, reproduce the redirects, caching rules, HSTS, and response headers from `edgeone.json`.
 - Cache hashed files under `/_astro/` for one year with `immutable`; cache HTML and sitemap files with revalidation so a new deploy is visible immediately.
 - Verify the production origin in Google Search Console and Bing Webmaster Tools, submit `/sitemap.xml`, then request indexing for `/`, `/fonts/`, and `/zh/fonts/`. If a `site:` search is still empty after deployment, inspect those URLs in the webmaster consoles before changing page content again.
 
 ## Privacy
 
-Banner text is processed inside the browser worker. Favorites and up to 10 recent text entries are device-local preferences stored in `localStorage`; history can be deleted from the generator, and the site has no backend or account system. Analytics consent and refusal choices expire after 15 days, after which the site asks again on the visitor's next visit.
+Banner text is processed inside the browser worker. Favorites and up to 10 recent text entries are device-local preferences stored in `localStorage`; history can be deleted from the generator, and the site has no backend or account system. Analytics is enabled by default; an opt-out is stored in `localStorage` and persists until analytics is turned back on or site data is cleared.

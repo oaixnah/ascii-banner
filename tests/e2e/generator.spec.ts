@@ -1,7 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { readFileSync } from "node:fs";
 import {
-  ANALYTICS_CONSENT_MAX_AGE_MS,
   ANALYTICS_CONSENT_STORAGE_KEY,
   serializeAnalyticsConsent,
 } from "../../src/lib/analytics";
@@ -15,7 +14,7 @@ const initialCardCount = 20;
 
 test.describe("ASCII Banner generator", () => {
   test.beforeEach(async ({ page }, testInfo) => {
-    if (!testInfo.title.includes("gates analytics behind consent")) {
+    if (!testInfo.title.includes("loads analytics by default and supports opting out")) {
       await page.addInitScript(({ key, state }) => {
         window.localStorage.setItem(key, state);
       }, { key: ANALYTICS_CONSENT_STORAGE_KEY, state: serializeAnalyticsConsent("denied") });
@@ -26,9 +25,8 @@ test.describe("ASCII Banner generator", () => {
     }, { key: TOUR_STORAGE_KEY, state: serializeTourState("completed") });
   });
 
-  test("gates analytics behind consent and excludes shared banner text", async ({ page }, testInfo) => {
-    test.skip(testInfo.project.name !== "chromium", "Analytics consent is covered once on desktop");
-    const expiredConsent = serializeAnalyticsConsent("denied", Date.now() - ANALYTICS_CONSENT_MAX_AGE_MS);
+  test("loads analytics by default and supports opting out", async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== "chromium", "Analytics behavior is covered once on desktop");
     await page.route("https://www.googletagmanager.com/**", (route) => route.fulfill({
       contentType: "application/javascript",
       body: "window.__googleAnalyticsLoaded = true;",
@@ -39,28 +37,8 @@ test.describe("ASCII Banner generator", () => {
     }));
 
     await page.goto("/");
-    await page.evaluate(({ key, state }) => {
-      window.localStorage.setItem(key, state);
-    }, { key: ANALYTICS_CONSENT_STORAGE_KEY, state: expiredConsent });
-    await page.reload();
-    const consent = page.getByRole("dialog", { name: "Help improve ASCII Banner?" });
-    await expect(consent).toBeVisible();
-    await expect.poll(() => page.evaluate(
-      (key) => window.localStorage.getItem(key),
-      ANALYTICS_CONSENT_STORAGE_KEY,
-    )).toBeNull();
-    await expect(consent.locator("[data-analytics-countdown]")).toHaveText("Minimizes in 5s");
-    await expect(page.locator("script[data-google-analytics], script[data-microsoft-clarity]")).toHaveCount(0);
-
-    await expect(consent).toBeHidden({ timeout: 7_000 });
-    const reviewChoice = page.getByRole("button", { name: "Review analytics choice" });
-    await expect(reviewChoice).toBeVisible();
-    await expect(page.locator("script[data-google-analytics], script[data-microsoft-clarity]")).toHaveCount(0);
-    await reviewChoice.click();
-    await expect(consent).toBeVisible();
-
-    await consent.getByRole("button", { name: "Allow analytics" }).click();
-    await expect(consent).toBeHidden();
+    const panel = page.getByRole("dialog", { name: "Analytics settings" });
+    await expect(panel).toBeHidden();
     await expect(page.locator("script[data-google-analytics]")).toHaveCount(1);
     await expect(page.locator("script[data-microsoft-clarity]")).toHaveCount(1);
     const firstPageCommands = await page.evaluate(() => (
@@ -78,10 +56,29 @@ test.describe("ASCII Banner generator", () => {
     await expect(page.locator("[data-clarity-mask]")).toBeVisible();
 
     await page.getByRole("button", { name: "Analytics settings" }).click();
-    await expect(consent).toBeVisible();
-    await consent.getByRole("button", { name: "Decline" }).click();
+    await expect(panel).toBeVisible();
+    await expect(panel).toContainText("Analytics is currently on.");
+    await panel.getByRole("button", { name: "Turn off analytics" }).click();
     await expect(page.locator("script[data-google-analytics], script[data-microsoft-clarity]")).toHaveCount(0);
     await expect.poll(() => page.evaluate((key) => window.localStorage.getItem(key), ANALYTICS_CONSENT_STORAGE_KEY)).toContain('"status":"denied"');
+
+    await page.evaluate(({ key, state }) => {
+      window.localStorage.setItem(key, state);
+    }, {
+      key: ANALYTICS_CONSENT_STORAGE_KEY,
+      state: serializeAnalyticsConsent("denied", Date.now() - 365 * 24 * 60 * 60 * 1000),
+    });
+    await page.reload();
+    await expect(page.locator("script[data-google-analytics], script[data-microsoft-clarity]")).toHaveCount(0);
+
+    await page.goto("/");
+    await page.getByRole("button", { name: "Analytics settings" }).click();
+    await expect(panel).toBeVisible();
+    await expect(panel).toContainText("Analytics is currently off.");
+    await panel.getByRole("button", { name: "Turn on analytics" }).click();
+    await expect(page.locator("script[data-google-analytics]")).toHaveCount(1);
+    await expect(page.locator("script[data-microsoft-clarity]")).toHaveCount(1);
+    await expect.poll(() => page.evaluate((key) => window.localStorage.getItem(key), ANALYTICS_CONSENT_STORAGE_KEY)).toBeNull();
   });
 
   test("onboards new users with an interactive, replayable five-step tour", async ({ page }, testInfo) => {

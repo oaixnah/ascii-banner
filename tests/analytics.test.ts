@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import {
-  ANALYTICS_CONSENT_MAX_AGE_MS,
   analyticsPageLocation,
   parseAnalyticsConfig,
   parseAnalyticsConsent,
@@ -24,23 +23,16 @@ describe("analytics configuration and privacy", () => {
     expect(() => parseAnalyticsConfig(gaId, clarityId)).toThrow();
   });
 
-  it("round-trips a versioned consent choice and rejects stale data", () => {
-    const now = 1_800_000_000_000;
-    expect(parseAnalyticsConsent(serializeAnalyticsConsent("granted", now), now)).toBe("granted");
-    expect(parseAnalyticsConsent(`{"version":1,"status":"granted","decidedAt":${now}}`, now)).toBeNull();
-    expect(parseAnalyticsConsent("broken")).toBeNull();
+  it("defaults to analytics enabled when no choice is stored", () => {
+    expect(parseAnalyticsConsent(null)).toBe("granted");
+    expect(parseAnalyticsConsent("broken")).toBe("granted");
+    expect(parseAnalyticsConsent(serializeAnalyticsConsent("granted"))).toBe("granted");
   });
 
-  it("expires granted and denied choices after 15 days", () => {
-    const now = 1_800_000_000_000;
-    const stillValid = now - ANALYTICS_CONSENT_MAX_AGE_MS + 1;
-    const expired = now - ANALYTICS_CONSENT_MAX_AGE_MS;
-
-    expect(parseAnalyticsConsent(serializeAnalyticsConsent("granted", stillValid), now)).toBe("granted");
-    expect(parseAnalyticsConsent(serializeAnalyticsConsent("denied", stillValid), now)).toBe("denied");
-    expect(parseAnalyticsConsent(serializeAnalyticsConsent("granted", expired), now)).toBeNull();
-    expect(parseAnalyticsConsent(serializeAnalyticsConsent("denied", expired), now)).toBeNull();
-    expect(parseAnalyticsConsent(serializeAnalyticsConsent("denied", now + 1), now)).toBeNull();
+  it("keeps an opt-out until it is cleared, regardless of age or version", () => {
+    const oldDecision = Date.now() - 365 * 24 * 60 * 60 * 1000;
+    expect(parseAnalyticsConsent(serializeAnalyticsConsent("denied", oldDecision))).toBe("denied");
+    expect(parseAnalyticsConsent(`{"version":1,"status":"denied","decidedAt":${oldDecision}}`)).toBe("denied");
   });
 
   it("removes query strings and fragments from analytics page locations", () => {

@@ -31,10 +31,11 @@ interface SiteMessages {
   analyticsConsentTitle: string;
   analyticsConsentDescription: string;
   analyticsConsentPrivacy: string;
+  analyticsStatusOn: string;
+  analyticsStatusOff: string;
   analyticsAccept: string;
   analyticsDecline: string;
-  analyticsMinimizeTemplate: string;
-  analyticsReviewChoice: string;
+  analyticsClose: string;
   footerTagline: string;
   footerFacts: (fontCount: number) => string;
   breadcrumb: string;
@@ -67,14 +68,15 @@ export const siteMessages: Record<SiteLocale, SiteMessages> = {
     privacy: "Privacy",
     terms: "Terms",
     analyticsSettings: "Analytics settings",
-    analyticsConsentEyebrow: "Optional analytics",
-    analyticsConsentTitle: "Help improve ASCII Banner?",
-    analyticsConsentDescription: "With your permission, Google Analytics measures page visits and Microsoft Clarity provides masked interaction insights. Banner text is excluded.",
+    analyticsConsentEyebrow: "Privacy settings",
+    analyticsConsentTitle: "Analytics settings",
+    analyticsConsentDescription: "Analytics is on by default. Google Analytics measures page visits and Microsoft Clarity provides masked interaction insights. Banner text is excluded, and you can turn analytics off at any time.",
     analyticsConsentPrivacy: "Privacy details",
-    analyticsAccept: "Allow analytics",
-    analyticsDecline: "Decline",
-    analyticsMinimizeTemplate: "Minimizes in {seconds}s",
-    analyticsReviewChoice: "Review analytics choice",
+    analyticsStatusOn: "Analytics is currently on.",
+    analyticsStatusOff: "Analytics is currently off.",
+    analyticsAccept: "Turn on analytics",
+    analyticsDecline: "Turn off analytics",
+    analyticsClose: "Close settings",
     footerTagline: "Built for people who ship from a terminal.",
     footerFacts: (fontCount) => `${fontCount} fonts · local rendering · no sign-up`,
     breadcrumb: "Breadcrumb",
@@ -105,14 +107,15 @@ export const siteMessages: Record<SiteLocale, SiteMessages> = {
     privacy: "隐私",
     terms: "使用条款",
     analyticsSettings: "分析设置",
-    analyticsConsentEyebrow: "可选分析",
-    analyticsConsentTitle: "愿意帮助我们改进 ASCII Banner 吗？",
-    analyticsConsentDescription: "经你同意后，Google Analytics 会统计页面访问，Microsoft Clarity 会提供经过遮罩的交互洞察；Banner 输入文字不会被采集。",
+    analyticsConsentEyebrow: "隐私设置",
+    analyticsConsentTitle: "分析设置",
+    analyticsConsentDescription: "分析默认开启。Google Analytics 会统计页面访问，Microsoft Clarity 会提供经过遮罩的交互洞察；Banner 输入文字不会被采集，你可以随时关闭分析。",
     analyticsConsentPrivacy: "查看隐私说明",
-    analyticsAccept: "允许分析",
-    analyticsDecline: "拒绝",
-    analyticsMinimizeTemplate: "{seconds} 秒后收起",
-    analyticsReviewChoice: "查看分析选项",
+    analyticsStatusOn: "分析当前已开启。",
+    analyticsStatusOff: "分析当前已关闭。",
+    analyticsAccept: "开启分析",
+    analyticsDecline: "关闭分析",
+    analyticsClose: "关闭设置",
     footerTagline: "为习惯从终端交付作品的开发者而做。",
     footerFacts: (fontCount) => `${fontCount} 种字体 · 本地生成 · 无需注册`,
     breadcrumb: "面包屑导航",
