@@ -1,0 +1,185 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width"><meta name="referrer" content="strict-origin"><meta name="generator" content="Astro v7.1.6"><meta name="description" content="The requested ASCII Banner page could not be found."><meta name="robots" content="noindex,follow"><meta name="theme-color" content="#0b1511"><link rel="icon" href="/favicon.svg" type="image/svg+xml"><meta property="og:type" content="website"><meta property="og:site_name" content="ASCII Banner"><meta property="og:title" content="Page not found | ASCII Banner"><meta property="og:description" content="The requested ASCII Banner page could not be found."><meta property="og:locale" content="en_US"><meta property="og:image" content="https://ascii-banner.oaix.tech/og.png"><meta property="og:image:secure_url" content="https://ascii-banner.oaix.tech/og.png"><meta property="og:image:type" content="image/png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="ASCII Banner — Your text. Every banner."><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="Page not found | ASCII Banner"><meta name="twitter:description" content="The requested ASCII Banner page could not be found."><meta name="twitter:image" content="https://ascii-banner.oaix.tech/og.png"><meta name="twitter:image:alt" content="ASCII Banner — Your text. Every banner."><script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"ASCII Banner","url":"https://ascii-banner.oaix.tech/","inLanguage":["en","zh-CN"]}</script><title>Page not found | ASCII Banner</title><link rel="stylesheet" href="/_astro/BaseLayout.YA-YV2CM.css"></head><body><header class="site-header"><div class="header-inner"><a class="brand" href="/" aria-label="ASCII Banner home"><span class="brand-mark">&gt;_</span><span>ASCII Banner</span></a><nav class="site-nav" aria-label="Main navigation"><a href="/fonts/">All fonts</a><a href="/#guides">Guides</a><a href="/about/">About</a><span class="nav-actions"><a class="nav-cta" href="/#gallery">Open generator</a><a class="language-switch" href="/zh/" hreflang="zh-CN" lang="zh-CN" aria-label="切换到中文" data-language-switch>中文</a></span></nav></div></header><main><div class="page-shell legal-page"><header class="article-hero"><span class="eyebrow">Error 404</span><h1>That banner left the terminal.</h1><p>The page may have moved, or the font name in the URL may be misspelled.</p></header><div class="empty-state"><a class="nav-cta" href="/">Return to the generator</a></div></div></main><footer class="site-footer"><div class="footer-inner"><div class="footer-brand"><a class="brand" href="/"><span class="brand-mark">&gt;_</span><span>ASCII Banner</span></a><p>Browse the complete FIGlet catalog, then copy production-ready banners for READMEs, terminals, and source code.</p></div><div class="footer-column"><strong>Generate</strong><a href="/fonts/">All fonts</a><a href="/fonts/standard/">Standard</a><a href="/fonts/ansi-shadow/">ANSI Shadow</a><a href="/fonts/slant/">Slant</a></div><div class="footer-column"><strong>Use cases</strong><a href="/for/github-readme/">GitHub README</a><a href="/for/code-comments/">Code comments</a><a href="/for/terminal-banner/">Terminal banner</a><a href="/for/cli-apps/">CLI apps</a></div><div class="footer-column"><strong>Company</strong><a href="/about/">About</a><a href="/contact/">Contact</a><a href="/privacy/">Privacy</a><a href="/terms/">Terms</a><button type="button" class="footer-settings-button" data-analytics-settings>Analytics settings</button></div><div class="footer-bottom"><span>© 2026 ASCII Banner. Built for people who ship from a terminal.</span><span>323 fonts · local rendering · no sign-up</span></div></div></footer><aside id="analytics-consent-panel" class="analytics-consent" role="dialog" aria-modal="false" aria-labelledby="analytics-consent-title" data-analytics-consent data-ga-id="G-ZBVNKPG6NF" data-clarity-id="xx81a3u9rp" data-storage-key="ascii-banner:analytics-consent" data-storage-version="3" data-status-on="Analytics is currently on." data-status-off="Analytics is currently off." hidden><div class="analytics-consent-heading"><span class="eyebrow">Privacy settings</span><button type="button" class="analytics-consent-close" data-analytics-close>Close settings</button></div><h2 id="analytics-consent-title">Analytics settings</h2><p>Analytics is on by default. Google Analytics measures page visits and Microsoft Clarity provides masked interaction insights. Banner text is excluded, and you can turn analytics off at any time. <a href="/privacy/">Privacy details</a></p><p class="analytics-consent-status" data-analytics-status aria-live="polite"></p><div class="analytics-consent-actions"><button type="button" class="analytics-decline" data-analytics-decline hidden>Turn off analytics</button><button type="button" class="analytics-accept" data-analytics-accept hidden>Turn on analytics</button></div></aside><script>
+  (() => {
+    const panel = document.querySelector("[data-analytics-consent]");
+    if (!(panel instanceof HTMLElement) || panel.dataset.initialized === "true") return;
+    panel.dataset.initialized = "true";
+
+    const gaId = panel.dataset.gaId;
+    const clarityId = panel.dataset.clarityId;
+    const storageKey = panel.dataset.storageKey;
+    const storageVersion = Number(panel.dataset.storageVersion);
+    const statusOn = panel.dataset.statusOn;
+    const statusOff = panel.dataset.statusOff;
+    if (
+      !gaId
+      || !clarityId
+      || !storageKey
+      || !Number.isInteger(storageVersion)
+      || !statusOn
+      || !statusOff
+    ) return;
+
+    const settingsButtons = document.querySelectorAll("[data-analytics-settings]");
+    const statusLabel = panel.querySelector("[data-analytics-status]");
+    const closeButton = panel.querySelector("[data-analytics-close]");
+    const acceptButton = panel.querySelector("[data-analytics-accept]");
+    const declineButton = panel.querySelector("[data-analytics-decline]");
+    let analyticsEnabled = false;
+    let opener = null;
+
+    const readStatus = () => {
+      try {
+        const parsed = JSON.parse(window.localStorage.getItem(storageKey) || "null");
+        if (parsed?.status === "denied") return "denied";
+      } catch {
+        // Storage can be unavailable or contain stale data.
+      }
+      return "granted";
+    };
+
+    const saveDenied = () => {
+      try {
+        window.localStorage.setItem(storageKey, JSON.stringify({
+          version: storageVersion,
+          status: "denied",
+          decidedAt: Date.now(),
+        }));
+      } catch {
+        // The opt-out still applies for this page when storage is unavailable.
+      }
+    };
+
+    const clearStatus = () => {
+      try {
+        window.localStorage.removeItem(storageKey);
+      } catch {
+        // Default-on behavior applies when storage is unavailable.
+      }
+    };
+
+    const googleConsent = (command, analyticsStorage) => {
+      window.dataLayer = window.dataLayer || [];
+      window.gtag = window.gtag || function () { window.dataLayer.push(arguments); };
+      window.gtag("consent", command, {
+        ad_storage: "denied",
+        ad_user_data: "denied",
+        ad_personalization: "denied",
+        analytics_storage: analyticsStorage,
+      });
+    };
+
+    const loadGoogleAnalytics = () => {
+      if (document.querySelector("script[data-google-analytics]")) return;
+      googleConsent("default", "denied");
+      window[`ga-disable-${gaId}`] = false;
+      googleConsent("update", "granted");
+
+      const script = document.createElement("script");
+      script.async = true;
+      script.src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(gaId)}`;
+      script.dataset.googleAnalytics = "true";
+      document.head.append(script);
+
+      window.gtag("js", new Date());
+      window.gtag("config", gaId, {
+        send_page_view: false,
+        allow_google_signals: false,
+        allow_ad_personalization_signals: false,
+      });
+      window.gtag("event", "page_view", {
+        page_title: document.title,
+        page_location: `${window.location.origin}${window.location.pathname}`,
+        page_path: window.location.pathname,
+        page_referrer: "",
+      });
+    };
+
+    const loadClarity = () => {
+      if (new URLSearchParams(window.location.search).has("text")) return;
+      if (document.querySelector("script[data-microsoft-clarity]")) return;
+
+      window.clarity = window.clarity || function () {
+        (window.clarity.q = window.clarity.q || []).push(arguments);
+      };
+      window.clarity("consentv2", {
+        ad_Storage: "denied",
+        analytics_Storage: "granted",
+      });
+
+      const script = document.createElement("script");
+      script.async = true;
+      script.src = `https://www.clarity.ms/tag/${encodeURIComponent(clarityId)}`;
+      script.dataset.microsoftClarity = "true";
+      document.head.append(script);
+    };
+
+    const enableAnalytics = () => {
+      loadGoogleAnalytics();
+      loadClarity();
+    };
+
+    const disableAnalytics = () => {
+      window[`ga-disable-${gaId}`] = true;
+      if (typeof window.gtag === "function") googleConsent("update", "denied");
+      if (typeof window.clarity === "function") {
+        window.clarity("consentv2", {
+          ad_Storage: "denied",
+          analytics_Storage: "denied",
+        });
+      }
+    };
+
+    const renderStatus = () => {
+      if (statusLabel instanceof HTMLElement) {
+        statusLabel.textContent = analyticsEnabled ? statusOn : statusOff;
+      }
+      if (acceptButton instanceof HTMLElement) acceptButton.hidden = analyticsEnabled;
+      if (declineButton instanceof HTMLElement) declineButton.hidden = !analyticsEnabled;
+    };
+
+    const showPanel = (trigger) => {
+      if (trigger instanceof HTMLElement) opener = trigger;
+      panel.hidden = false;
+      renderStatus();
+      const primaryAction = analyticsEnabled ? declineButton : acceptButton;
+      if (primaryAction instanceof HTMLElement) primaryAction.focus();
+    };
+
+    const hidePanel = () => {
+      panel.hidden = true;
+      if (opener instanceof HTMLElement) opener.focus();
+    };
+
+    settingsButtons.forEach((button) => button.addEventListener("click", () => showPanel(button)));
+    closeButton?.addEventListener("click", hidePanel);
+
+    acceptButton?.addEventListener("click", () => {
+      clearStatus();
+      analyticsEnabled = true;
+      enableAnalytics();
+      renderStatus();
+      hidePanel();
+    });
+
+    declineButton?.addEventListener("click", () => {
+      const wasEnabled = analyticsEnabled;
+      saveDenied();
+      analyticsEnabled = false;
+      disableAnalytics();
+      renderStatus();
+      if (wasEnabled) window.location.reload();
+      else hidePanel();
+    });
+
+    panel.addEventListener("keydown", (event) => {
+      if (event.key !== "Escape") return;
+      event.stopPropagation();
+      hidePanel();
+    });
+
+    analyticsEnabled = readStatus() !== "denied";
+    if (analyticsEnabled) enableAnalytics();
+    else disableAnalytics();
+    renderStatus();
+  })();
+</script></body></html>
