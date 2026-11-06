@@ -3,9 +3,7 @@ import { CLARITY_PROJECT_ID, GA_MEASUREMENT_ID } from "astro:env/server";
 import { siteMessages, type SiteLocale } from "../i18n/ui";
 import {
   ANALYTICS_CONSENT_STORAGE_KEY,
-  ANALYTICS_CONSENT_MAX_AGE_MS,
   ANALYTICS_CONSENT_VERSION,
-  ANALYTICS_PROMPT_SESSION_KEY,
   parseAnalyticsConfig,
 } from "../lib/analytics";
 
@@ -30,36 +28,22 @@ const privacyPath = locale === "zh" ? "/zh/privacy/" : "/privacy/";
   data-clarity-id={config.clarityProjectId}
   data-storage-key={ANALYTICS_CONSENT_STORAGE_KEY}
   data-storage-version={ANALYTICS_CONSENT_VERSION}
-  data-consent-max-age={ANALYTICS_CONSENT_MAX_AGE_MS}
-  data-prompt-session-key={ANALYTICS_PROMPT_SESSION_KEY}
+  data-status-on={copy.analyticsStatusOn}
+  data-status-off={copy.analyticsStatusOff}
   hidden
 >
   <div class="analytics-consent-heading">
     <span class="eyebrow">{copy.analyticsConsentEyebrow}</span>
-    <span
-      class="analytics-consent-countdown"
-      data-analytics-countdown
-      data-template={copy.analyticsMinimizeTemplate}
-      aria-hidden="true"
-    >
-      {copy.analyticsMinimizeTemplate.replace("{seconds}", "5")}
-    </span>
+    <button type="button" class="analytics-consent-close" data-analytics-close>{copy.analyticsClose}</button>
   </div>
   <h2 id="analytics-consent-title">{copy.analyticsConsentTitle}</h2>
   <p>{copy.analyticsConsentDescription} <a href={privacyPath}>{copy.analyticsConsentPrivacy}</a></p>
+  <p class="analytics-consent-status" data-analytics-status aria-live="polite"></p>
   <div class="analytics-consent-actions">
-    <button type="button" class="analytics-decline" data-analytics-decline>{copy.analyticsDecline}</button>
-    <button type="button" class="analytics-accept" data-analytics-accept>{copy.analyticsAccept}</button>
+    <button type="button" class="analytics-decline" data-analytics-decline hidden>{copy.analyticsDecline}</button>
+    <button type="button" class="analytics-accept" data-analytics-accept hidden>{copy.analyticsAccept}</button>
   </div>
 </aside>
-<button
-  type="button"
-  class="analytics-consent-toggle"
-  data-analytics-consent-toggle
-  aria-controls="analytics-consent-panel"
-  aria-expanded="false"
-  hidden
->{copy.analyticsReviewChoice}</button>
 
 <script is:inline>
   (() => {
@@ -71,65 +55,53 @@ const privacyPath = locale === "zh" ? "/zh/privacy/" : "/privacy/";
     const clarityId = panel.dataset.clarityId;
     const storageKey = panel.dataset.storageKey;
     const storageVersion = Number(panel.dataset.storageVersion);
-    const consentMaxAge = Number(panel.dataset.consentMaxAge);
-    const promptSessionKey = panel.dataset.promptSessionKey;
+    const statusOn = panel.dataset.statusOn;
+    const statusOff = panel.dataset.statusOff;
     if (
       !gaId
       || !clarityId
       || !storageKey
-      || !promptSessionKey
       || !Number.isInteger(storageVersion)
-      || !Number.isFinite(consentMaxAge)
+      || !statusOn
+      || !statusOff
     ) return;
 
     const settingsButtons = document.querySelectorAll("[data-analytics-settings]");
-    const promptToggle = document.querySelector("[data-analytics-consent-toggle]");
-    const countdownLabel = panel.querySelector("[data-analytics-countdown]");
+    const statusLabel = panel.querySelector("[data-analytics-status]");
+    const closeButton = panel.querySelector("[data-analytics-close]");
     const acceptButton = panel.querySelector("[data-analytics-accept]");
     const declineButton = panel.querySelector("[data-analytics-decline]");
-    let currentStatus = null;
-    let countdownInterval = 0;
-    let collapseTimeout = 0;
-
-    const clearCountdown = () => {
-      window.clearInterval(countdownInterval);
-      window.clearTimeout(collapseTimeout);
-      countdownInterval = 0;
-      collapseTimeout = 0;
-      if (countdownLabel instanceof HTMLElement) countdownLabel.hidden = true;
-    };
+    let analyticsEnabled = false;
+    let opener = null;
 
     const readStatus = () => {
       try {
         const parsed = JSON.parse(window.localStorage.getItem(storageKey) || "null");
-        const age = Date.now() - parsed?.decidedAt;
-        if (
-          parsed?.version === storageVersion
-          && (parsed.status === "granted" || parsed.status === "denied")
-          && Number.isFinite(age)
-          && age >= 0
-          && age < consentMaxAge
-        ) {
-          return parsed.status;
-        }
-        window.localStorage.removeItem(storageKey);
+        if (parsed?.status === "denied") return "denied";
       } catch {
         // Storage can be unavailable or contain stale data.
       }
-      return null;
+      return "granted";
     };
 
-    const saveStatus = (status) => {
+    const saveDenied = () => {
       try {
         window.localStorage.setItem(storageKey, JSON.stringify({
           version: storageVersion,
-          status,
+          status: "denied",
           decidedAt: Date.now(),
         }));
       } catch {
-        // Consent still applies for this page when storage is unavailable.
+        // The opt-out still applies for this page when storage is unavailable.
       }
-      currentStatus = status;
+    };
+
+    const clearStatus = () => {
+      try {
+        window.localStorage.removeItem(storageKey);
+      } catch {
+        // Default-on behavior applies when storage is unavailable.
+      }
     };
 
     const googleConsent = (command, analyticsStorage) => {
@@ -204,93 +176,57 @@ const privacyPath = locale === "zh" ? "/zh/privacy/" : "/privacy/";
       }
     };
 
-    const showPanel = (withCountdown = false) => {
-      clearCountdown();
-      panel.hidden = false;
-      if (promptToggle instanceof HTMLElement) promptToggle.hidden = true;
-      promptToggle?.setAttribute("aria-expanded", "true");
-      document.body.classList.add("analytics-consent-pending");
-      if (!withCountdown) return;
-
-      let seconds = 5;
-      if (countdownLabel instanceof HTMLElement) {
-        countdownLabel.hidden = false;
-        countdownLabel.textContent = countdownLabel.dataset.template?.replace("{seconds}", String(seconds)) || countdownLabel.textContent;
+    const renderStatus = () => {
+      if (statusLabel instanceof HTMLElement) {
+        statusLabel.textContent = analyticsEnabled ? statusOn : statusOff;
       }
-      countdownInterval = window.setInterval(() => {
-        seconds -= 1;
-        if (countdownLabel instanceof HTMLElement && seconds > 0) {
-          countdownLabel.textContent = countdownLabel.dataset.template?.replace("{seconds}", String(seconds)) || countdownLabel.textContent;
-        }
-      }, 1000);
-      collapseTimeout = window.setTimeout(() => collapsePanel(true), 5000);
+      if (acceptButton instanceof HTMLElement) acceptButton.hidden = analyticsEnabled;
+      if (declineButton instanceof HTMLElement) declineButton.hidden = !analyticsEnabled;
+    };
+
+    const showPanel = (trigger) => {
+      if (trigger instanceof HTMLElement) opener = trigger;
+      panel.hidden = false;
+      renderStatus();
+      const primaryAction = analyticsEnabled ? declineButton : acceptButton;
+      if (primaryAction instanceof HTMLElement) primaryAction.focus();
     };
 
     const hidePanel = () => {
-      clearCountdown();
       panel.hidden = true;
-      if (promptToggle instanceof HTMLElement) promptToggle.hidden = true;
-      promptToggle?.setAttribute("aria-expanded", "false");
-      document.body.classList.remove("analytics-consent-pending");
+      if (opener instanceof HTMLElement) opener.focus();
     };
 
-    const collapsePanel = (rememberForSession = false) => {
-      clearCountdown();
-      panel.hidden = true;
-      if (promptToggle instanceof HTMLElement) promptToggle.hidden = false;
-      promptToggle?.setAttribute("aria-expanded", "false");
-      document.body.classList.remove("analytics-consent-pending");
-      if (rememberForSession) {
-        try {
-          window.sessionStorage.setItem(promptSessionKey, "1");
-        } catch {
-          // A collapsed prompt can safely reappear when session storage is unavailable.
-        }
-      }
-    };
-
-    settingsButtons.forEach((button) => button.addEventListener("click", () => {
-      showPanel();
-      declineButton?.focus();
-    }));
-    promptToggle?.addEventListener("click", () => {
-      showPanel();
-      declineButton?.focus();
-    });
+    settingsButtons.forEach((button) => button.addEventListener("click", () => showPanel(button)));
+    closeButton?.addEventListener("click", hidePanel);
 
     acceptButton?.addEventListener("click", () => {
-      saveStatus("granted");
-      hidePanel();
+      clearStatus();
+      analyticsEnabled = true;
       enableAnalytics();
+      renderStatus();
+      hidePanel();
     });
 
     declineButton?.addEventListener("click", () => {
-      const shouldReload = currentStatus === "granted";
-      saveStatus("denied");
+      const wasEnabled = analyticsEnabled;
+      saveDenied();
+      analyticsEnabled = false;
       disableAnalytics();
-      hidePanel();
-      if (shouldReload) window.location.reload();
+      renderStatus();
+      if (wasEnabled) window.location.reload();
+      else hidePanel();
     });
 
     panel.addEventListener("keydown", (event) => {
       if (event.key !== "Escape") return;
-      if (currentStatus) hidePanel();
-      else collapsePanel(true);
-      if (promptToggle instanceof HTMLElement && !promptToggle.hidden) promptToggle.focus();
+      event.stopPropagation();
+      hidePanel();
     });
 
-    currentStatus = readStatus();
-    if (currentStatus === "granted") enableAnalytics();
-    else if (currentStatus === "denied") disableAnalytics();
-    else {
-      let wasCollapsed = false;
-      try {
-        wasCollapsed = window.sessionStorage.getItem(promptSessionKey) === "1";
-      } catch {
-        // Fall back to the short prompt when session storage is unavailable.
-      }
-      if (wasCollapsed) collapsePanel();
-      else showPanel(true);
-    }
+    analyticsEnabled = readStatus() !== "denied";
+    if (analyticsEnabled) enableAnalytics();
+    else disableAnalytics();
+    renderStatus();
   })();
 </script>
